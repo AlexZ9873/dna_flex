@@ -1,0 +1,4 @@
+seed: 42
+device: "cpu"
+tokenizer:
+  k: 6
