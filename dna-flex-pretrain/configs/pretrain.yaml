@@ -1,4 +1,25 @@
 seed: 42
 device: "cpu"
+
 tokenizer:
   k: 6
+
+model:
+  d_model: 64
+  n_heads: 4
+  n_layers: 2
+  max_len: 512
+
+train:
+  lambda_mlm: 0.1
+  lambda_flex: 1.0
+  lr: 0.001
+  weight_decay: 0.001
+
+features:
+  dinucleotide:
+    - twistDisp
+    - xDisp
+  trinucleotide:
+    - NPP
+    - DNaseI

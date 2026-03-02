@@ -17,26 +17,35 @@ class TinyDNAEncoderOneHot(nn.Module):
     def forward(self, x_onehot_flat: torch.Tensor, attention_mask: torch.Tensor):
         """
         x_onehot_flat: [B, L, 24]
-        attention_mask: [B, L] (1=real token, 0=padding)
+        attention_mask: [B, L]
         """
         B, L, _ = x_onehot_flat.shape
 
-        # 1) Project 24-d one-hot token features into hidden space
-        x = self.input_proj(x_onehot_flat)  # [B, L, d_model]
+        # Project flattened 6x4 one-hot token into hidden space
+        x = self.input_proj(x_onehot_flat)   # [B, L, d_model]
 
-        # 2) Add positional embeddings
+        # Add positional embedding
         pos = torch.arange(L, device=x_onehot_flat.device).unsqueeze(0).expand(B, L)
         x = x + self.pos_emb(pos)
 
-        # 3) Transformer padding mask (True means ignore)
+        # Transformer padding mask
         key_padding_mask = (attention_mask == 0)
 
-        # 4) Contextual encoding
+        # Contextual encoding
         h = self.encoder(x, src_key_padding_mask=key_padding_mask)  # [B, L, d_model]
         return h
 
 class TinyMultiTaskModelOneHot(nn.Module):
-    def __init__(self, input_dim: int = 24, vocab_size: int = 4100, d_model: int = 64, n_heads: int = 4, n_layers: int = 2, max_len: int = 512):
+    def __init__(
+        self,
+        input_dim: int = 24,
+        vocab_size: int = 4100,
+        d_model: int = 64,
+        n_heads: int = 4,
+        n_layers: int = 2,
+        max_len: int = 512,
+        n_flex: int = 2
+    ):
         super().__init__()
         self.encoder = TinyDNAEncoderOneHot(
             input_dim=input_dim,
@@ -45,11 +54,11 @@ class TinyMultiTaskModelOneHot(nn.Module):
             n_layers=n_layers,
             max_len=max_len
         )
-        self.mlm_head = nn.Linear(d_model, vocab_size)  # predict k-mer ID
-        self.flex_head = nn.Linear(d_model, 1)          # predict one scalar per token
+        self.mlm_head = nn.Linear(d_model, vocab_size)   # predict masked k-mer ID
+        self.flex_head = nn.Linear(d_model, n_flex)      # predict multiple regression targets
 
     def forward(self, x_onehot_flat: torch.Tensor, attention_mask: torch.Tensor):
         h = self.encoder(x_onehot_flat, attention_mask)   # [B, L, d_model]
         mlm_logits = self.mlm_head(h)                     # [B, L, vocab_size]
-        flex_pred = self.flex_head(h).squeeze(-1)         # [B, L]
+        flex_pred = self.flex_head(h)                     # [B, L, n_flex]
         return mlm_logits, flex_pred
