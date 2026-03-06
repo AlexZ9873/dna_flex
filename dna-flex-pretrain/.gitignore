@@ -1,0 +1,4 @@
+
+# ignore huge genome fasta
+/data/raw/hg38.fa
+/data/raw/hg38.fa.gz
