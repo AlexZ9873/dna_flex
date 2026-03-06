@@ -2,3 +2,16 @@
 # ignore huge genome fasta
 /data/raw/hg38.fa
 /data/raw/hg38.fa.gz
+
+# big genome files (keep locally, not on GitHub)
+data/raw/hg38.fa
+data/raw/hg38.fa.gz
+
+# environment / caches
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# model artifacts (optional; remove this line if you WANT checkpoints on GitHub)
+checkpoints/
