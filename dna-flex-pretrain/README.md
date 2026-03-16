@@ -34,6 +34,8 @@ Reusable core code (the “library”):
   - flex regression head to predict flexibility features per token
 
 ### `scripts/`
+(Scripts guide)
+Primary scripts (use these):
 Runnable scripts (the “entry points”):
 **Pretraining / data prep**
 - `scripts/make_windows_from_yaml.py`  
@@ -54,6 +56,11 @@ Runnable scripts (the “entry points”):
   - train an MLP head (with dropout + early stopping) to predict PBM score
 - `scripts/eval_pbm_r2_flex_maxpool.py`  
   Evaluates PBM performance with Pearson + R² and prints **calibrated R²** (fit y ≈ a*yhat + b on val).
+  
+**Experimental/validation scripts (optional reference)**
+  -validate_* — internal checks (shape checks, loss checks, ablations)
+  -finetune_pbm_max_*baseline* — baseline comparisons
+  -finetune_pbm_max_hidden_* / *_unfreeze_* — alternative fine-tuning experiments
 
 ### `data/`
 Local datasets (not committed to GitHub if large):
