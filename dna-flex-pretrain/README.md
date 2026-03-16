@@ -78,9 +78,34 @@ Training logs (CSV or text). Usually excluded from GitHub.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-
+```
 ### 2) PBM data is included, data/raw/pbm/Max.txt is included in this repo for reproducing PBM fine-tuning.
 hg38 is not included, Download hg38 locally using:
-
+```
 ./scripts/download_hg38_ucsc.sh
 gunzip -k data/raw/hg38.fa.gz
+
+```
+### 3) Install dependencies
+```
+pip install --upgrade pip
+pip install torch pyyaml numpy pandas tqdm
+pip install matplotlib
+```
+### 4) Run PBM fine-tuning (best pipeline)
+```
+PYTHONPATH="$(pwd)" python scripts/finetune_pbm_max_flex_maxpool_betterhead.py
+```
+Expected:
+1. prints epoch-by-epoch training lines
+2. prints final metrics: best_val_rmse, test_rmse, test_pearson, test_r2
+3. saves head checkpoint: checkpoints/pbm_max_best_head_flex_maxpool_betterhead.pt
+
+### 5) Evaluate Pearson + R² (including calibrated R²)
+```
+PYTHONPATH="$(pwd)" python scripts/eval_pbm_r2_flex_maxpool.py
+```
+1. test_pearson (trend / ranking quality)
+2. test_r2 (variance explained; sensitive to scale/offset)
+3. test_r2_calibrated (fits y ≈ a*yhat + b on validation then evaluates on test)
+
