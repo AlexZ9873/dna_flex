@@ -21,3 +21,50 @@ checkpoints/
 
 # Python packaging build artifacts
 *.egg-info/
+
+# big genome files (keep locally, not on GitHub)
+data/raw/hg38.fa
+data/raw/hg38.fa.gz
+
+# optional: generated windows can also be huge
+data/raw/hg38_windows_*.txt
+data/raw/hg38_windows_*_train.txt
+data/raw/hg38_windows_*_val.txt
+
+# environment / caches
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# training artifacts (recommended to keep out of git)
+checkpoints/
+logs/
+
+# big genome files (keep locally, not on GitHub)
+data/raw/hg38.fa
+data/raw/hg38.fa.gz
+
+# optional: generated windows can also be huge
+data/raw/hg38_windows_*.txt
+data/raw/hg38_windows_*_train.txt
+data/raw/hg38_windows_*_val.txt
+
+# environment / caches
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# training artifacts (recommended to keep out of git)
+checkpoints/
+logs/
+
+# huge genome files (do NOT commit)
+data/raw/hg38.fa
+data/raw/hg38.fa.gz
+
+# macOS + python cache
+.DS_Store
+__pycache__/
+*.pyc

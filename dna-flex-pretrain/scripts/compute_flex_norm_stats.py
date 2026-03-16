@@ -26,7 +26,7 @@ def main():
     mean = torch.zeros(F, dtype=torch.float64)
     M2 = torch.zeros(F, dtype=torch.float64)
 
-    max_windows = 500  # fast starter; increase later (e.g., 1800) for more accurate stats
+    max_windows = 5000  # better stats for 50k-window training set
 
     with open(train_path, "r") as f:
         for i, line in enumerate(f):

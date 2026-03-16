@@ -57,8 +57,10 @@ class TinyMultiTaskModelOneHot(nn.Module):
         self.mlm_head = nn.Linear(d_model, vocab_size)   # predict masked k-mer ID
         self.flex_head = nn.Linear(d_model, n_flex)      # predict multiple regression targets
 
-    def forward(self, x_onehot_flat: torch.Tensor, attention_mask: torch.Tensor):
+    def forward(self, x_onehot_flat: torch.Tensor, attention_mask: torch.Tensor, return_hidden: bool = False):
         h = self.encoder(x_onehot_flat, attention_mask)   # [B, L, d_model]
         mlm_logits = self.mlm_head(h)                     # [B, L, vocab_size]
         flex_pred = self.flex_head(h)                     # [B, L, n_flex]
+        if return_hidden:
+            return mlm_logits, flex_pred, h
         return mlm_logits, flex_pred

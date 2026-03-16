@@ -13,11 +13,50 @@ train:
   lr: 0.001
   weight_decay: 0.001
   mlm_prob: 0.15
-  steps_per_run: 2000
+  steps_per_run: 5000
+  log_every: 50
+  eval_every: 500
+  val_max_batches: 50
 features:
   dinucleotide:
-  - twistDisp
   - xDisp
+  - wedge
+  - prop
+  - freeen
+  - gc
+  - twistDisp
+  - stifness
+  - bendingstiffness
   trinucleotide:
   - NPP
   - DNaseI
+  - bendabilityDNase
+  - bendabilityConcensus
+data:
+  fasta_path: data/raw/hg38.fa
+  window_bp: 256
+  num_windows: 200000
+  chromosomes:
+  - chr1
+  - chr2
+  - chr3
+  - chr4
+  - chr5
+  - chr6
+  - chr7
+  - chr8
+  - chr9
+  - chr10
+  - chr11
+  - chr12
+  - chr13
+  - chr14
+  - chr15
+  - chr16
+  - chr17
+  - chr18
+  - chr19
+  - chr20
+  - chr21
+  - chr22
+  val_fraction: 0.1

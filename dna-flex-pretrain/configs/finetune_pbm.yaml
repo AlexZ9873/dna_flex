@@ -1,0 +1,12 @@
+data_path: data/raw/pbm/Max.txt
+pretrained_ckpt: checkpoints/hg38_256_chr1-22_200k_di8_tri4_best_by_val_flex.pt
+train:
+  seed: 2
+  batch_size: 64
+  epochs: 30
+  lr: 0.001
+  weight_decay: 0.0
+  split:
+    train: 0.8
+    val: 0.1
+    test: 0.1
