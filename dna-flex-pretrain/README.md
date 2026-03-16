@@ -73,12 +73,12 @@ Local datasets (not committed to GitHub if large):
   Processed artifacts like global normalization stats for flex features.
 
 ### `checkpoints/`
-Saved model weights (often excluded from GitHub because they can be large).
+Saved model weights (excluded from GitHub because they can be large).
 - Pretraining checkpoints (last / best)
 - Fine-tuning head checkpoints
 
 ### `logs/`
-Training logs (CSV or text). Usually excluded from GitHub.
+Training logs (CSV or text). excluded from GitHub.
 
 ---
 
