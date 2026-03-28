@@ -68,3 +68,14 @@ data/raw/hg38.fa.gz
 .DS_Store
 __pycache__/
 *.pyc
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python caches
+__pycache__/
+*.pyc
+
+# backups
+*.bak
