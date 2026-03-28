@@ -119,3 +119,50 @@ PYTHONPATH="$(pwd)" python scripts/eval_pbm_r2_flex_maxpool.py
 2. test_r2 (variance explained; sensitive to scale/offset)
 3. test_r2_calibrated (fits y ≈ a*yhat + b on validation then evaluates on test)
 
+
+---
+
+## Recent updates (2026-03)
+
+This repo recently added PBM baselines + paper-style plots to better compare the transformer features against classic sequence models.
+
+### What changed / what was added
+
+**1) New PBM baselines (paper-style comparisons)**
+- `scripts/baseline_pbm_ridge_1mer.py`  
+  Ridge regression on **positional 1-mer** features (A/C/G/T at each position).  
+  This provides a strong “classic PBM baseline” and helps validate that the PBM file parsing + splits + metrics are correct.
+
+**2) New transformer fine-tune heads (to improve R² and interpretability)**
+- `scripts/finetune_pbm_hidden_poslinear.py`  
+  Uses **frozen pretrained encoder hidden states** and trains a **position-aware linear head** (flatten per-position features) to predict PBM score.
+- `scripts/finetune_pbm_hidden_plus_flex_poslinear.py`  
+  Same as above but concatenates **hidden + flex_pred** features (still frozen encoder) before the position-aware linear head.
+
+These “position-aware linear” heads tend to perform much better than pooled heads on PBM because PBM binding is strongly motif/position dependent.
+
+**3) Figure/plot generation scripts (paper-style panels)**
+- `scripts/plot_panelA_r2_ridge_vs_transformer.py`  
+  Panel A-style scatter comparing model performance metrics.
+- `scripts/plot_panelB_pred_vs_obs.py`  
+  Panel B-style Predicted vs Observed scatter (test set) for ridge vs transformer head.
+- `scripts/plot_panelC_sample_size_vs_r2.py`  
+  Panel C-style sample size vs R² curves (mean ± std across seeds).
+- `scripts/panel_c_ridge_on_transformer_features.py`  
+  Utility to run Panel C using transformer features (frozen encoder) + ridge.
+
+**4) Generated outputs saved for reproducibility**
+- `plots/`  
+  CSVs + PNGs saved from the plotting scripts (so results can be reproduced/checked).
+- `figures/`  
+  Figure PNG exports (final “paper-style” images).
+
+**5) Repo hygiene**
+- Updated `.gitignore` to exclude OS/Python cache files (e.g., `.DS_Store`, `__pycache__`, `*.pyc`, `*.bak`) to keep commits clean.
+
+### Why this matters
+These additions make it easier to:
+- verify PBM evaluation with a strong classic baseline (ridge 1-mer),
+- demonstrate what the pretrained transformer learned (via hidden-state linear heads),
+- produce paper-style plots that directly compare against the paper’s reported PBM R² trends.
+
