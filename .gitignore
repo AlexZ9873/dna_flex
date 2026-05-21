@@ -1,0 +1,24 @@
+# ---- OS / Python cache ----
+.DS_Store
+**/.DS_Store
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+# ---- local environments ----
+dna-flex-pretrain/.venv/
+dna-flex-pretrain/dna_flex_pretrain.egg-info/
+# ---- large / regenerated artifacts ----
+dna-flex-pretrain/checkpoints/
+dna-flex-pretrain/logs/
+# Raw external datasets should usually not be committed.
+dna-flex-pretrain/data/raw/hg38.fa
+dna-flex-pretrain/data/raw/hg38_windows_*.txt
+dna-flex-pretrain/data/raw/bendability/
+dna-flex-pretrain/data/raw/htselex/
+# Generated benchmark outputs.
+dna-flex-pretrain/plots/*.csv
+dna-flex-pretrain/plots/*.png
+# Keep README placeholders if added later.
+!dna-flex-pretrain/plots/README.md
+!dna-flex-pretrain/checkpoints/README.md
+!dna-flex-pretrain/logs/README.md

@@ -12,7 +12,7 @@ class TinyDNAEncoderOneHot(nn.Module):
             nhead=n_heads,
             batch_first=True
         )
-        self.encoder = nn.TransformerEncoder(layer, num_layers=n_layers)
+        self.encoder = nn.TransformerEncoder(layer, num_layers=n_layers, enable_nested_tensor=False)
 
     def forward(self, x_onehot_flat: torch.Tensor, attention_mask: torch.Tensor):
         """

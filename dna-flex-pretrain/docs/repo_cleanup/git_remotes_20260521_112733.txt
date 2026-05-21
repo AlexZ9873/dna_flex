@@ -1,0 +1,2 @@
+origin	git@github.com:AlexZ9873/dna_flex.git (fetch)
+origin	git@github.com:AlexZ9873/dna_flex.git (push)
