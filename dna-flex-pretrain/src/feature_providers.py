@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict, Mapping, Optional, Sequence, Tuple
 
 import torch
@@ -12,6 +13,10 @@ from src.coordinates import (
     canonical_orientation,
     normalize_sequence,
     reverse_complement,
+)
+from src.data_fingerprints import (
+    hash_logical_content,
+    repository_relative_source_path,
 )
 from src.feature_schema import (
     AmbiguousBaseRule,
@@ -30,6 +35,7 @@ from src.flex_features import load_lookup_yaml
 
 
 LookupTables = Dict[str, Dict[str, float]]
+LOOKUP_TABLE_PROVIDER_IDENTIFIER = "lookup_table_native_coordinates.v1"
 
 
 class LookupTableFeatureProvider(BiophysicalFeatureProvider):
@@ -45,6 +51,7 @@ class LookupTableFeatureProvider(BiophysicalFeatureProvider):
         citation: str = "not_documented_in_repository_lookup_table",
         schema_version: str = "1.0",
     ) -> None:
+        self._source_version = source_version
         dinucleotide_tables = lookup_data.get("dinucleotide", {})
         trinucleotide_tables = lookup_data.get("trinucleotide", {})
 
@@ -98,6 +105,17 @@ class LookupTableFeatureProvider(BiophysicalFeatureProvider):
         self._schemas = (
             self._dinucleotide_schemas + self._trinucleotide_schemas
         )
+        provider_content = {
+            "fingerprint_version": "lookup_table_provider_fingerprint.v1",
+            "provider_identifier": LOOKUP_TABLE_PROVIDER_IDENTIFIER,
+            "source": source,
+            "source_version": source_version,
+            "dinucleotide_feature_names": list(self._dinucleotide_names),
+            "trinucleotide_feature_names": list(self._trinucleotide_names),
+            "dinucleotide_tables": self._dinucleotide_tables,
+            "trinucleotide_tables": self._trinucleotide_tables,
+        }
+        self._provider_fingerprint = hash_logical_content(provider_content)
 
     @classmethod
     def from_yaml(
@@ -108,19 +126,45 @@ class LookupTableFeatureProvider(BiophysicalFeatureProvider):
         source_version: str = "unversioned",
         citation: str = "not_documented_in_repository_lookup_table",
         schema_version: str = "1.0",
+        repository_root: Optional[str] = None,
     ) -> "LookupTableFeatureProvider":
         """Load the existing YAML format without changing legacy consumers."""
 
         lookup_data = load_lookup_yaml(lookup_path)
+        if repository_root is None:
+            source = Path(lookup_path).name
+        else:
+            source = repository_relative_source_path(
+                lookup_path,
+                repository_root,
+            )
         return cls(
             lookup_data=lookup_data,
             dinucleotide_feature_names=dinucleotide_feature_names,
             trinucleotide_feature_names=trinucleotide_feature_names,
-            source=lookup_path,
+            source=source,
             source_version=source_version,
             citation=citation,
             schema_version=schema_version,
         )
+
+    @property
+    def provider_identifier(self) -> str:
+        """Return the stable provider implementation identifier."""
+
+        return LOOKUP_TABLE_PROVIDER_IDENTIFIER
+
+    @property
+    def source_version(self) -> str:
+        """Return the lookup-table source version."""
+
+        return self._source_version
+
+    @property
+    def provider_fingerprint(self) -> str:
+        """Return a fingerprint of effective lookup values and configuration."""
+
+        return self._provider_fingerprint
 
     @property
     def schemas(self) -> Tuple[FeatureSchema, ...]:

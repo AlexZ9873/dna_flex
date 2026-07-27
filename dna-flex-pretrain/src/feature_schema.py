@@ -185,6 +185,21 @@ class BiophysicalFeatureProvider(ABC):
 
     @property
     @abstractmethod
+    def provider_identifier(self) -> str:
+        """Return a stable identifier for the provider implementation."""
+
+    @property
+    @abstractmethod
+    def source_version(self) -> str:
+        """Return the physical-feature source version."""
+
+    @property
+    @abstractmethod
+    def provider_fingerprint(self) -> str:
+        """Return a deterministic fingerprint of effective provider content."""
+
+    @property
+    @abstractmethod
     def schemas(self) -> Tuple[FeatureSchema, ...]:
         """Return all feature schemas in stable output order."""
 

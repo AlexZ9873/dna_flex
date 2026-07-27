@@ -1,8 +1,17 @@
+"""Legacy token targets plus strict systematic native-feature datasets."""
+
 import random
 import yaml
 import torch
 from torch.utils.data import Dataset
 
+from src.coordinates import normalize_sequence
+from src.data_fingerprints import (
+    fingerprint_sequence_file,
+    load_split_manifest,
+)
+from src.feature_normalization import load_validated_normalizer
+from src.feature_schema import BiophysicalFeatureProvider
 from src.tokenization import build_kmer_vocab, encode_sequence_to_ids, encode_sequence_onehot_6x4
 from src.flex_features import (
     sequence_to_multi_dinuc_targets,
@@ -10,6 +19,8 @@ from src.flex_features import (
 )
 
 def load_norm_stats(path: str):
+    """Load the legacy unversioned normalization format."""
+
     with open(path, "r") as f:
         stats = yaml.safe_load(f)
     mean = torch.tensor(stats["mean"], dtype=torch.float32)
@@ -18,6 +29,8 @@ def load_norm_stats(path: str):
     return feature_names, mean, std
 
 class GenomeWindowDataset(Dataset):
+    """Legacy 6-mer-averaged dataset retained for old experiments only."""
+
     def __init__(
         self,
         window_txt_path,
@@ -125,4 +138,66 @@ class GenomeWindowDataset(Dataset):
             "flex_targets": flex,
             "length": L,
             "seq": seq,
+        }
+
+
+class SystematicNativeFeatureDataset(Dataset):
+    """Strict opt-in native-coordinate features with validated normalization."""
+
+    def __init__(
+        self,
+        window_txt_path: str,
+        split_role: str,
+        repository_root: str,
+        provider: BiophysicalFeatureProvider,
+        split_manifest_path: str,
+        normalization_artifact_path: str,
+        max_rows=None,
+    ):
+        if split_role not in ("training", "validation"):
+            raise ValueError(
+                "Systematic dataset split_role must be training or validation."
+            )
+        split_manifest = load_split_manifest(split_manifest_path)
+        current_fingerprint = fingerprint_sequence_file(
+            window_txt_path,
+            repository_root,
+        )
+        if split_role == "training":
+            expected_fingerprint = split_manifest.training_source
+        else:
+            expected_fingerprint = split_manifest.validation_source
+        if current_fingerprint.to_dict() != expected_fingerprint.to_dict():
+            message = (
+                "Systematic {0} source does not match the split manifest."
+            )
+            raise ValueError(message.format(split_role))
+
+        self.provider = provider
+        self.normalizer = load_validated_normalizer(
+            normalization_artifact_path,
+            provider,
+            split_manifest,
+        )
+        self.seqs = []
+        with open(window_txt_path, "r", encoding="utf-8") as sequence_file:
+            for row_index, line in enumerate(sequence_file):
+                if max_rows is not None and row_index >= max_rows:
+                    break
+                stripped = line.strip()
+                if not stripped:
+                    message = "Blank systematic sequence row at line {0}."
+                    raise ValueError(message.format(row_index + 1))
+                self.seqs.append(normalize_sequence(stripped))
+
+    def __len__(self):
+        return len(self.seqs)
+
+    def __getitem__(self, idx):
+        sequence = self.seqs[idx]
+        raw_features = self.provider.compute(sequence)
+        normalized_features = self.normalizer.transform(raw_features)
+        return {
+            "seq": sequence,
+            "feature_batch": normalized_features,
         }

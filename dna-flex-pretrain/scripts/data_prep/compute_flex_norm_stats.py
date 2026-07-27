@@ -1,11 +1,48 @@
-import os
+"""Legacy 6-mer-averaged normalization script; not for systematic studies."""
+
+import argparse
+from pathlib import Path
+import re
+
 import yaml
 import torch
 
 from src.utils import load_yaml
 from src.flex_features import load_lookup_yaml, sequence_to_multi_dinuc_targets, sequence_to_multi_trinuc_targets
 
+
+VERSIONED_OUTPUT_PATTERN = re.compile(r"(^|[_-])v[0-9]+($|[_-])")
+LEGACY_OUTPUT_PATH = Path("data/processed/flex_norm_stats.yaml").resolve()
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Compute legacy 6-mer-averaged normalization statistics."
+    )
+    parser.add_argument("--output", required=True)
+    return parser.parse_args()
+
+
+def validated_output_path(path: str) -> Path:
+    """Require a new versioned YAML path that cannot replace the old artifact."""
+
+    output_path = Path(path).resolve()
+    if output_path == LEGACY_OUTPUT_PATH:
+        raise ValueError("Refusing to replace the legacy normalization artifact.")
+    if output_path.suffix.lower() not in (".yaml", ".yml"):
+        raise ValueError("Legacy normalization output must use YAML.")
+    if VERSIONED_OUTPUT_PATTERN.search(output_path.stem) is None:
+        raise ValueError(
+            "Legacy normalization output must contain a version such as '_v1'."
+        )
+    if output_path.exists():
+        message = "Legacy normalization output already exists: {0}"
+        raise FileExistsError(message.format(output_path))
+    return output_path
+
+
 def main():
+    arguments = parse_arguments()
     cfg = load_yaml("configs/pretrain.yaml")
     k = cfg["tokenizer"]["k"]
 
@@ -17,9 +54,8 @@ def main():
     lookup = load_lookup_yaml("data/raw/flex_tables/lookup.yaml")
 
     train_path = "data/raw/hg38_windows_256_train.txt"
-    out_path = "data/processed/flex_norm_stats.yaml"
-
-    os.makedirs("data/processed", exist_ok=True)
+    out_path = validated_output_path(arguments.output)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Welford-style batch combination stats
     n = 0
@@ -79,7 +115,7 @@ def main():
         "max_windows_used": int(max_windows),
     }
 
-    with open(out_path, "w") as f:
+    with open(out_path, "x") as f:
         yaml.safe_dump(stats, f)
 
     print("saved:", out_path)

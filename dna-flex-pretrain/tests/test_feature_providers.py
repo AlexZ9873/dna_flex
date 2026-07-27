@@ -1,6 +1,7 @@
 """Tests for native-coordinate lookup-table physical features."""
 
 import inspect
+import os
 from pathlib import Path
 import unittest
 
@@ -37,7 +38,10 @@ class LookupTableFeatureProviderTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.lookup_data = load_lookup_yaml(str(LOOKUP_PATH))
-        cls.provider = LookupTableFeatureProvider.from_yaml(str(LOOKUP_PATH))
+        cls.provider = LookupTableFeatureProvider.from_yaml(
+            str(LOOKUP_PATH),
+            repository_root=str(REPOSITORY_ROOT),
+        )
 
     def test_current_lookup_tables_load_in_stable_legacy_order(self) -> None:
         expected_names = (
@@ -59,6 +63,29 @@ class LookupTableFeatureProviderTests(unittest.TestCase):
             actual_names.append(schema.name)
 
         self.assertEqual(tuple(actual_names), expected_names)
+
+    def test_fallback_source_identity_is_independent_of_path_spelling(
+        self,
+    ) -> None:
+        relative_lookup_path = os.path.relpath(
+            LOOKUP_PATH,
+            Path.cwd(),
+        )
+        relative_provider = LookupTableFeatureProvider.from_yaml(
+            relative_lookup_path
+        )
+        absolute_provider = LookupTableFeatureProvider.from_yaml(
+            str(LOOKUP_PATH)
+        )
+
+        self.assertEqual(
+            relative_provider.schemas[0].source,
+            absolute_provider.schemas[0].source,
+        )
+        self.assertEqual(
+            relative_provider.provider_fingerprint,
+            absolute_provider.provider_fingerprint,
+        )
 
     def test_future_providers_share_an_unimplemented_abstract_interface(
         self,
@@ -109,7 +136,10 @@ class LookupTableFeatureProviderTests(unittest.TestCase):
 
         self.assertEqual(schema.name, "xDisp")
         self.assertEqual(schema.display_name, "xDisp")
-        self.assertEqual(schema.source, str(LOOKUP_PATH))
+        self.assertEqual(
+            schema.source,
+            "data/raw/flex_tables/lookup.yaml",
+        )
         self.assertEqual(schema.source_version, "unversioned")
         self.assertEqual(
             schema.citation,
