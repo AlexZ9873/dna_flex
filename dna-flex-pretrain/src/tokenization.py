@@ -1,6 +1,8 @@
 from itertools import product
 import torch
 
+from src.coordinates import TokenizedSequence, tokenize_with_coordinates
+
 DNA_ALPHABET = ["A", "C", "G", "T"]
 
 # Base-level one-hot mapping (4 channels)
@@ -21,6 +23,11 @@ def tokenize_kmers(seq: str, k: int):
     for i in range(len(seq) - k + 1):
         kmers.append(seq[i:i+k])
     return kmers
+
+def tokenize_kmers_with_coordinates(seq: str, k: int) -> TokenizedSequence:
+    """Tokenize supported k values while retaining canonical coordinates."""
+
+    return tokenize_with_coordinates(seq, k)
 
 def build_kmer_vocab(k: int):
     """
