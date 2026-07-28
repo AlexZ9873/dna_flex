@@ -1,0 +1,222 @@
+{
+  "artifact_hash": "48c1d3b2df08c922f4f808401e5251512acd02fecd46dde3c06df51e9ffbe667",
+  "artifact_schema_version": "biophysical_normalization.v2",
+  "coordinate_types": [
+    "base_step_centered",
+    "base_step_centered",
+    "base_step_centered",
+    "base_step_centered",
+    "base_step_centered",
+    "base_step_centered",
+    "base_step_centered",
+    "base_step_centered",
+    "base_centered",
+    "base_centered",
+    "base_centered",
+    "base_centered"
+  ],
+  "creation_entry_point": "python -m scripts.data_prep.fit_biophysical_normalization",
+  "display_names": [
+    "xDisp",
+    "wedge",
+    "prop",
+    "freeen",
+    "gc",
+    "twistDisp",
+    "stifness",
+    "bendingstiffness",
+    "NPP",
+    "DNaseI",
+    "bendabilityDNase",
+    "bendabilityConcensus"
+  ],
+  "experiment_split_manifest_hash": "6f585eb6446b4ea3e704eb9428865c6663a782c82b14ba8e760476b3373faf7b",
+  "feature_names": [
+    "xDisp",
+    "wedge",
+    "prop",
+    "freeen",
+    "gc",
+    "twistDisp",
+    "stifness",
+    "bendingstiffness",
+    "NPP",
+    "DNaseI",
+    "bendabilityDNase",
+    "bendabilityConcensus"
+  ],
+  "feature_order": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "feature_provider_fingerprint": "fe4e19a9c29b05e627cc12c26783a61f706ba2c5165fa7f34e53e44cc6a4024d",
+  "feature_provider_identifier": "lookup_table_native_coordinates.v1",
+  "feature_provider_source_version": "lookup.yaml@sha256:b64f6bb02eb13d70e490aee4946fd960090252b4abc20c587779e55a8f9eafa6",
+  "feature_schema_hash": "4b24d1d5862568ae897f16a2e0e55df18700198b365fe52fcb19255b50e5fa1a",
+  "fit_value_handling": "use_only_provider-valid finite values; exclude NaN, missing lookup, ambiguous-base, and boundary-invalid positions",
+  "standard_deviation_convention": "population_standard_deviation_ddof_0",
+  "statistics": [
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "xDisp",
+      "feature_order": 0,
+      "mean": -0.1060074494166288,
+      "name": "xDisp",
+      "standard_deviation": 0.6668682571311818,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "wedge",
+      "feature_order": 1,
+      "mean": 4.598203214225103,
+      "name": "wedge",
+      "standard_deviation": 2.592391897725871,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "prop",
+      "feature_order": 2,
+      "mean": -13.085420283949258,
+      "name": "prop",
+      "standard_deviation": 3.5663966822357667,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "freeen",
+      "feature_order": 3,
+      "mean": -1.299185910510703,
+      "name": "freeen",
+      "standard_deviation": 0.3815890686594444,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "gc",
+      "feature_order": 4,
+      "mean": 0.40848482570806455,
+      "name": "gc",
+      "standard_deviation": 0.3394800588356974,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "twistDisp",
+      "feature_order": 5,
+      "mean": 4.7862413708587335,
+      "name": "twistDisp",
+      "standard_deviation": 0.8409715375918461,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "stifness",
+      "feature_order": 6,
+      "mean": 2233.6532795207677,
+      "name": "stifness",
+      "standard_deviation": 1139.2486491889642,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_step_centered",
+      "display_name": "bendingstiffness",
+      "feature_order": 7,
+      "mean": 57.93789063180863,
+      "name": "bendingstiffness",
+      "standard_deviation": 29.74960500547734,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45900000
+    },
+    {
+      "coordinate_type": "base_centered",
+      "display_name": "NPP",
+      "feature_order": 8,
+      "mean": 14.327017847769094,
+      "name": "NPP",
+      "standard_deviation": 10.437975762745053,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45720000
+    },
+    {
+      "coordinate_type": "base_centered",
+      "display_name": "DNaseI",
+      "feature_order": 9,
+      "mean": -0.026177066162223785,
+      "name": "DNaseI",
+      "standard_deviation": 0.1420538529892696,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45720000
+    },
+    {
+      "coordinate_type": "base_centered",
+      "display_name": "bendabilityDNase",
+      "feature_order": 10,
+      "mean": 5.349877533099977,
+      "name": "bendabilityDNase",
+      "standard_deviation": 2.9994098036230077,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45720000
+    },
+    {
+      "coordinate_type": "base_centered",
+      "display_name": "bendabilityConcensus",
+      "feature_order": 11,
+      "mean": 4.803720300100778,
+      "name": "bendabilityConcensus",
+      "standard_deviation": 2.202612416959624,
+      "unit": "unspecified_in_source_table",
+      "valid_count": 45720000
+    }
+  ],
+  "training_source_fingerprint": {
+    "exact_sequence_duplicate_count": 9,
+    "fingerprint_hash": "37e83425781d9b8c5bd76a6149bb6c330bfa8d197904eabba9f916b7ab8f3311",
+    "logical_sequence_sha256": "e18e068bbfd54a73d9cbc6b5f9b923a4b5c98739b348addf913a4c76dec2077b",
+    "maximum_sequence_length": 256,
+    "minimum_sequence_length": 256,
+    "observed_sequence_lengths": [
+      256
+    ],
+    "reverse_complement_canonical_duplicate_count": 9,
+    "schema_version": "sequence_source_fingerprint.v2",
+    "sequences_containing_n": 0,
+    "source_file_sha256": "11c236391c71711529bc81e11bde9a5acdacaa9b130d04f7365334c6e7e32edc",
+    "source_path": "data/generated/hg38_pretraining_split_v1/hg38_training_sequences_v1.txt",
+    "total_rows": 180000,
+    "unique_sequences": 179991
+  },
+  "transform_value_handling": "preserve invalid positions as NaN with a false validity mask; never zero-impute",
+  "units": [
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table",
+    "unspecified_in_source_table"
+  ]
+}
