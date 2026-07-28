@@ -1,4 +1,4 @@
-# Advisor Progress Report — July 28, 2026
+# Progress Report — July 28, 2026
 
 ## Big picture
 
@@ -117,7 +117,7 @@ central conclusion must remain conditional on the experiments: the study may
 show a benefit, no measurable effect, or an effect limited to particular
 assays, feature groups, or data regimes.
 
-## Discussion points for the advisor
+## Discussion points
 
 1. **Primary tokenizer:** Should 1-mer remain the primary representation, with
    3-mer and 6-mer restricted to controlled ablations, or is there a strong
