@@ -1,0 +1,80 @@
+schema_version: genomic_pretraining_split_config.v1
+
+reference:
+  path: data/raw/hg38.fa
+  expected_raw_sha256: 5be01555d98347fdb3714dc84c6f77c9d8bc774adcf32c6f7a8fa06f5baf5e51
+  identifier: ucsc_hg38
+
+policy:
+  id: hg38_whole_chromosome_holdout.v1
+  eligible_chromosomes:
+    - chr1
+    - chr2
+    - chr3
+    - chr4
+    - chr5
+    - chr6
+    - chr7
+    - chr8
+    - chr9
+    - chr10
+    - chr11
+    - chr12
+    - chr13
+    - chr14
+    - chr15
+    - chr16
+    - chr17
+    - chr18
+    - chr19
+    - chr20
+    - chr21
+    - chr22
+  chromosomes:
+    training:
+      - chr1
+      - chr2
+      - chr3
+      - chr4
+      - chr5
+      - chr6
+      - chr7
+      - chr8
+      - chr9
+      - chr10
+      - chr11
+      - chr12
+      - chr13
+      - chr14
+      - chr15
+      - chr16
+      - chr17
+      - chr18
+      - chr19
+      - chr20
+    validation:
+      - chr21
+    test:
+      - chr22
+  window_length: 256
+  sampling_seed: 42
+  target_counts:
+    training: 180000
+    validation: 10000
+    test: 10000
+  maximum_candidate_multiplier: 2
+  strand: "+"
+
+outputs:
+  directory: data/generated/hg38_pretraining_split_v1
+  records:
+    training: data/generated/hg38_pretraining_split_v1/hg38_training_records_v1.tsv
+    validation: data/generated/hg38_pretraining_split_v1/hg38_validation_records_v1.tsv
+    test: data/generated/hg38_pretraining_split_v1/hg38_test_records_v1.tsv
+  sequences:
+    training: data/generated/hg38_pretraining_split_v1/hg38_training_sequences_v1.txt
+    validation: data/generated/hg38_pretraining_split_v1/hg38_validation_sequences_v1.txt
+    test: data/generated/hg38_pretraining_split_v1/hg38_test_sequences_v1.txt
+  rejections: data/generated/hg38_pretraining_split_v1/hg38_rejections_v1.tsv
+  child_manifest: data/generated/hg38_pretraining_split_v1/hg38_train_validation_manifest_v2.json
+  genomic_manifest: data/generated/hg38_pretraining_split_v1/hg38_coordinate_split_manifest_v1.json

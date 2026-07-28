@@ -79,3 +79,6 @@ __pycache__/
 
 # backups
 *.bak
+
+# Milestone 2.5 coordinate-preserving hg38 pretraining split
+data/generated/hg38_pretraining_split_v1/
