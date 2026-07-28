@@ -229,7 +229,7 @@ specification.
 ## Progress report
 
 A concise lab-meeting summary of the current branch is available in
-[Advisor progress report — July 28, 2026](docs/advisor_progress_2026-07-28.md).
+[Advisor progress report — July 27, 2026](docs/advisor_progress_2026-07-27.md).
 
 ## References
 
