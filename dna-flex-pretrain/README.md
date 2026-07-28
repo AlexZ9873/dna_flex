@@ -1,282 +1,179 @@
-# DNA Flex Pretrain
+# DNA Biophysical Auxiliary Pretraining
 
-Transformer-based DNA representation learning for transcription factor binding prediction.
+Systematic DNA representation learning for in vitro transcription
+factor–DNA binding prediction.
 
-This project tests whether a pretrained DNA encoder can learn a reusable representation that combines:
+## Overview
 
-1. **sequence context**, learned through masked 6-mer prediction, and
-2. **DNA mechanical / flexibility information**, learned through lookup-table-derived flexibility targets.
+This project tests whether sequence-derived DNA biophysical supervision can
+improve the transferability, labeled-data efficiency, and interpretability of
+DNA foundation models. The active systematic study compares models that
+receive the same DNA sequence input and differ in their pretraining objective.
+TF-binding labels and TF protein information remain absent from pretraining,
+and the primary downstream comparison uses DNA sequence only. This design is
+intended to isolate whether biophysical auxiliary supervision changes the
+quality of the learned DNA representation.
 
-The goal is to build a pretrained encoder that can transfer to TF-binding tasks where labeled data are limited, including gcPBM, HT-SELEX, and future in-vivo TF-binding benchmarks.
+## Core research question
 
----
+> Does sequence-derived DNA biophysical auxiliary pretraining improve
+> transferability, data efficiency, and interpretability for in vitro TF-DNA
+> binding prediction?
 
-## Project motivation
+The scientific motivation is that TF binding depends on motif sequence and
+local sequence context, while DNA shape, flexibility, bendability, and
+stiffness can contribute to molecular recognition. Rather than adding these
+properties only as task-specific downstream features, this study asks whether
+predicting them during pretraining helps a sequence encoder learn a more useful
+and interpretable representation.
 
-Transcription factor (TF) binding is not determined by motif sequence alone. Binding specificity also depends on local sequence context and DNA structural / mechanical properties such as flexibility, bendability, torsional variability, and stiffness.
-
-Previous feature-engineering work showed that adding DNA flexibility descriptors to sequence baselines can improve TF-binding prediction. This project asks a related representation-learning question:
-
-> Can a transformer encoder be pretrained to learn reusable DNA sequence and mechanics-aware representations, rather than hand-engineering task-specific features each time?
-
----
-
-## Core model
-
-### Input representation
-
-DNA sequences are tokenized into overlapping **6-mers**.
-
-For a sequence of length `L`, the number of tokens is:
-
-```text
-L - 6 + 1
-```
-
-Each 6-mer is represented as a `6 x 4` one-hot matrix and flattened into a 24-dimensional vector.
+## Study workflow
 
 ```text
-DNA sequence -> overlapping 6-mers -> 24D one-hot token vectors
+hg38 sequence
+→ reproducible genomic split
+→ tokenizer-independent sequence and feature alignment
+→ S0/S1/S2 pretraining
+→ in vitro TF-binding evaluation
+→ transferability, data-efficiency, and interpretability analysis
 ```
 
-### Encoder
+## Current status
 
-The encoder is a small transformer encoder.
-
-Current architecture:
-
-```text
-d_model  = 64
-n_heads  = 4
-n_layers = 2
-```
-
-The encoder maps each token into a contextual hidden state:
-
-```text
-input tokens [T, 24] -> transformer encoder -> hidden states [T, 64]
-```
-
----
-
-## Pretraining objectives
-
-The main pretrained model uses two self-supervised objectives.
-
-### 1. Flexibility regression
-
-For each 6-mer token, the model predicts a 12-dimensional flexibility vector.
-
-The 12 features are computed from lookup tables:
-
-- 8 dinucleotide features
-- 4 trinucleotide features
-
-For each 6-mer, the relevant internal 2-mer or 3-mer values are averaged to produce the token-level target.
-
-### 2. Masked 6-mer prediction
-
-A subset of 6-mer tokens is masked. The MLM head predicts the original 6-mer identity from surrounding context.
-
-For `k = 6`:
-
-```text
-4^6 = 4096 possible DNA 6-mers
-```
-
-plus special tokens, giving a vocabulary size of about 4100.
-
-### Total pretraining loss
-
-```text
-L_total = lambda_flex * L_flex + lambda_mlm * L_mlm
-```
-
-Default setting:
-
-```text
-lambda_flex = 1.0
-lambda_mlm  = 0.1
-```
-
----
-
-## Downstream transfer
-
-After pretraining, the encoder is reused for TF-binding prediction.
-
-The downstream learning problem is:
-
-```text
-DNA sequence -> measured TF binding score
-```
-
-Current downstream datasets:
-
-- **gcPBM**: Max, Mad, Myc
-- **HT-SELEX**: large multi-family TF benchmark
-
----
-
-## Downstream readouts
-
-Several readout strategies are tested.
-
-| Readout | Description |
+| Stage | Status |
 |---|---|
-| `flex only` | uses only the predicted flexibility vector |
-| `hidden only` | uses contextual transformer hidden states |
-| `hidden + flex` | concatenates hidden state and predicted flexibility at each token |
+| Completed | Scientific design, canonical base and base-step coordinates, coordinate-aware tokenization, the 12-feature lookup-table provider, reproducible hg38 splitting and leakage audits, training-only feature normalization, and supporting tests |
+| In progress | Transition from the data and feature foundation to the true S0 sequence-only masked-language-model implementation |
+| Next | S0 baseline, S1 individual-feature supervision, S2a fixed PCA targets, and S2b frozen learned physical components |
+| Later | Controlled tokenizer comparisons, common downstream evaluation, reduced-label and transfer experiments, interpretability analyses, and future physical-feature providers |
 
-The strongest current downstream readout is generally:
+The completed work establishes a reproducible experimental foundation. The
+systematic S0, S1, S2a, and S2b pretraining comparisons have **not** yet been
+run, so this branch does not claim that biophysical supervision improves
+TF-binding prediction.
 
-```text
-hidden state + predicted flexibility
-```
+## Controlled pretraining conditions
 
----
+All primary conditions use corrupted DNA sequence as the encoder input.
+Biophysical values are supervision targets, not additional inputs, and are not
+silently supplied during primary downstream inference.
 
-## Baselines
+| Condition | Pretraining target | Purpose |
+|---|---|---|
+| **S0** | Original DNA bases at corrupted positions | Sequence-only masked-language-model baseline |
+| **S1** | S0 targets plus individually standardized physical features | Test whether named raw biophysical targets improve representation learning |
+| **S2a** | S0 targets plus fixed PCA-derived physical components | Test a compact, fixed biophysical subspace fit on training data only |
+| **S2b** | S0 targets plus codes from a separately trained and frozen physical-feature compressor | Test a learned but independently defined biophysical subspace |
 
-The pretrained representations are compared against classical sequence and flexibility baselines.
+S0, S1, S2a, and S2b will use matched encoder capacity, pretraining data,
+optimization budgets, downstream splits, and evaluation budgets. Physical
+losses will be applied only where the complete sequence support of a target is
+hidden from the encoder.
 
-| Baseline | Description |
-|---|---|
-| `1-mer ridge` | positional A/C/G/T one-hot features with Ridge regression |
-| `1-mer + 12-flex` | positional 1-mer plus this project's 12 lookup-table flexibility features |
-| `2-mer ridge` | positional dinucleotide one-hot features |
-| `3-mer ridge` | positional trinucleotide one-hot features |
+Direct physical-feature input fusion is deferred until the primary
+sequence-only comparison is complete.
 
----
+## Tokenization and physical features
 
-## Bendability-stage experiments
+The planned primary representation is a **1-mer tokenizer**. Overlapping
+stride-one **3-mer** and legacy **6-mer** tokenizers are controlled ablations.
+Tokenizer size and physical-feature context length are treated as separate
+experimental choices.
 
-The project also tests whether a sequence-level bendability objective improves transfer.
+The current feature source is a lookup-table provider with:
 
-The bendability data are 50-bp DNA sequences with one bendability score per sequence. Four continued-pretraining strategies are compared:
+- eight dinucleotide features aligned to base steps; and
+- four trinucleotide features aligned to their middle bases.
 
-| Strategy | Active objectives |
-|---|---|
-| `bend only` | bendability regression |
-| `bend + flex` | bendability regression + flexibility regression |
-| `flex + MLM` | flexibility regression + masked 6-mer prediction |
-| `bend + flex + MLM` | bendability regression + flexibility regression + masked 6-mer prediction |
+The systematic representation preserves these native coordinates instead of
+averaging all feature values inside tokenizer tokens. Each feature track
+retains validity masks, context-support spans, and reverse-complement metadata.
+Unavailable or ambiguous values are masked rather than silently imputed.
 
-Current result:
+Offline DeepDNAshape outputs and processed hexABC features are planned future
+extensions. Their provider interfaces are defined, but the providers
+themselves are not completed current functionality.
 
-> Bendability supervision is learnable, but in the current setup it does not improve transfer beyond flex+MLM. The flex+MLM checkpoint gives the strongest and most consistent gcPBM transfer performance among the four bendability-stage strategies.
+## Reproducible hg38 pretraining split
 
----
+The active pretraining dataset uses a coordinate-preserving,
+whole-chromosome split of 256-base hg38 windows.
 
-## Current findings
+| Split | Chromosomes | Sequences |
+|---|---|---:|
+| Training | chr1–chr20 | 180,000 |
+| Validation | chr21 | 10,000 |
+| Test | chr22 | 10,000 |
 
-### gcPBM
+Stored audits report zero cross-split genomic-interval, same-locus,
+exact-sequence, and reverse-complement-equivalent overlap. Repeated sequences
+within a split are recorded separately rather than hidden. Preserving genomic
+coordinates makes overlap checks possible and prevents a random sequence-level
+split from placing nearby or equivalent genomic windows in different
+evaluation partitions.
 
-- `hidden + flex` readout outperforms flex-only readout.
-- `flex + MLM` is the strongest continued-pretraining strategy in the current gcPBM setup.
-- Bendability-only pretraining performs worst among the four bendability-stage strategies.
-- Adding bendability on top of flex+MLM does not improve gcPBM transfer in the current setup.
-- Sample-efficiency analysis suggests that pretrained representations are useful in low-data regimes.
+## Training-only normalization
 
-### HT-SELEX
+A versioned normalization artifact has been generated for the 12 current
+lookup-table features using the 180,000-sequence training split only. It records
+feature order, coordinate type, valid observation counts, means, standard
+deviations, provider identity, and the associated split identity.
 
-- The pretrained representation generally improves over a simple 1-mer baseline.
-- It is competitive with sequence / flexibility baselines.
-- Strong explicit 3-mer baselines remain difficult to beat.
-- Current frozen encoder features do not fully capture all explicit trinucleotide binding signal.
+The same training-derived statistics must be used for training, validation,
+and test data. Missing or incompatible artifacts fail closed; per-window or
+per-sequence normalization is not used as a fallback.
 
-### Interpretation
+## Planned downstream evaluation
 
-The model learns useful sequence-context and mechanics-related representations without TF-binding labels. However, stronger pretraining, fine-tuning, hybrid models, or larger model capacity may be needed to consistently outperform strong k-mer baselines on HT-SELEX.
+The primary downstream comparison remains sequence-only so that any difference
+can be attributed to pretraining rather than the direct availability of
+physical features at inference time. Planned evaluation includes:
 
----
+- per-TF performance within in vitro binding assays;
+- transfer to held-out TFs and TF families;
+- compatible cross-assay transfer;
+- nested labeled-data fractions from 1% to 100%;
+- frozen embeddings from S0, S1, S2a, and S2b;
+- raw positional 1-mer, 2-mer, and 3-mer baselines;
+- a common XGBoost probe as the primary downstream predictor; and
+- neural downstream evaluation as an explicitly matched secondary analysis.
 
-## Repository structure
+The comparisons will use identical examples, folds, training fractions,
+hyperparameter-search budgets, metrics, and random seeds. TF protein embeddings
+are excluded from the primary study and may only be introduced later as a
+separate downstream condition.
+
+## Repository organization
 
 ```text
 dna-flex-pretrain/
-├── configs/                 # YAML configuration files
-├── data/                    # Local data files; large external datasets are mostly ignored by git
-├── docs/                    # Documentation, script inventory, data summaries
+├── configs/                 # Experiment and systematic split configuration
+├── data/
+│   ├── raw/                 # Local source data
+│   ├── generated/           # Generated split records and manifests
+│   └── processed/           # Versioned derived artifacts
+├── docs/                    # Project notes, inventories, and progress reports
 ├── scripts/
-│   ├── data_prep/           # Data preparation scripts
-│   ├── pretrain/            # hg38 and bendability-stage pretraining
-│   ├── finetune/            # PBM fine-tuning / downstream heads
-│   ├── benchmark/           # HT-SELEX and gcPBM benchmark scripts
-│   ├── plot/                # Final plotting / replotting scripts
-│   └── archive/             # Legacy, exploratory, debug, and validation scripts
-├── src/                     # Model, dataset, tokenization, and utility code
-├── requirements.txt
-├── setup.py
+│   ├── data_prep/           # Systematic split, audit, and normalization tools
+│   ├── pretrain/            # Currently legacy prototype training scripts
+│   ├── finetune/            # Legacy/prototype downstream scripts
+│   ├── benchmark/           # Existing benchmark scripts
+│   ├── plot/                # Plotting utilities
+│   └── archive/             # Archived exploratory and validation scripts
+├── src/
+│   ├── coordinates.py       # Canonical base, base-step, and token spans
+│   ├── feature_schema.py    # Physical-feature metadata and provider contracts
+│   ├── feature_providers.py # Native-coordinate lookup-table provider
+│   ├── genomic_splits.py    # Coordinate-preserving split construction/audits
+│   └── ...                  # Legacy models plus systematic data utilities
+├── tests/                   # Coordinate, feature, artifact, and split tests
+├── PROJECT_SPEC.md          # Scientific design and experimental controls
 └── README.md
 ```
 
----
-
-## Important source files
-
-| File | Purpose |
-|---|---|
-| `src/model.py` | transformer encoder, MLM head, flexibility head |
-| `src/tokenization.py` | overlapping k-mer tokenization and one-hot encoding |
-| `src/genome_dataset.py` | hg38 pretraining dataset with MLM/flex targets |
-| `src/bendability_dataset.py` | 50-bp bendability dataset loader |
-| `src/pbm_dataset.py` | PBM / gcPBM dataset loader |
-| `src/flex_features.py` | lookup-table-based flexibility feature computation |
-| `src/collate.py` | batching / padding utilities |
-| `src/utils.py` | configuration helpers |
-
----
-
-## Active scripts
-
-### Data preparation
-
-```text
-scripts/data_prep/compute_flex_norm_stats.py
-scripts/data_prep/make_windows_from_yaml.py
-scripts/data_prep/split_windows_from_yaml.py
-scripts/data_prep/download_hg38_ucsc.sh
-```
-
-### Pretraining
-
-```text
-scripts/pretrain/pretrain_hg38_tiny_trainval.py
-scripts/pretrain/pretrain_bendability_stage1.py
-scripts/pretrain/pretrain_bendability_stage2_mlm.py
-```
-
-### Downstream fine-tuning
-
-```text
-scripts/finetune/baseline_pbm_ridge_1mer.py
-scripts/finetune/finetune_pbm_hidden_poslinear.py
-scripts/finetune/finetune_pbm_hidden_plus_flex_poslinear.py
-```
-
-### Benchmarks
-
-```text
-scripts/benchmark/benchmark_htselex_option2_panelA.py
-scripts/benchmark/add_htselex_1mer12flex.py
-scripts/benchmark/benchmark_gcpbm_four_checkpoints.py
-scripts/benchmark/panelC_gcpbm_sample_efficiency.py
-```
-
-### Plotting
-
-```text
-scripts/plot/plot_gcpbm_4model_boxplot.py
-scripts/plot/replot_panelC_gcpbm_no_errorbar.py
-scripts/plot/replot_htselex_2x2_clean.py
-```
-
----
-
 ## Environment setup
 
-From the repository root:
+From the project directory:
 
 ```bash
 python -m venv .venv
@@ -286,200 +183,68 @@ pip install -r requirements.txt
 export PYTHONPATH="$(pwd)"
 ```
 
----
-
-## Data layout
-
-Large external datasets are expected locally and are generally not committed to git.
-
-Expected local layout:
+Large external datasets and model checkpoints are expected to remain local
+and are generally not committed to Git. The current lookup table is expected
+at:
 
 ```text
 data/raw/flex_tables/lookup.yaml
-
-data/raw/pbm/
-├── Max.txt
-├── Mad.txt
-└── Myc.txt
-
-data/raw/htselex/
-└── *.txt
-
-data/raw/bendability/
-├── Data1/
-│   ├── train_set.txt
-│   ├── vaild_set.txt
-│   └── test_set.txt
-├── Data2/
-│   ├── train_set.txt
-│   ├── vaild_set.txt
-│   └── test_set.txt
-├── minidata/
-└── no_replicate.txt
 ```
 
-The filename `vaild_set.txt` is intentionally kept because that is the spelling used in the upstream bendability dataset.
-
----
-
-## Checkpoints
-
-Model checkpoints are expected locally under:
+The hg38 reference used to regenerate the systematic split is expected at:
 
 ```text
-checkpoints/
+data/raw/hg38.fa
 ```
 
-Important checkpoint names used in current benchmark scripts include:
+Existing PBM, gcPBM, HT-SELEX, and bendability data layouts are retained for
+the legacy prototype workflows. They are not presented here as the active
+systematic pretraining workflow.
 
-```text
-checkpoints/hg38_256_chr1-22_200k_di8_tri4_best_by_val_flex.pt
-checkpoints/bendability_stage1_data1_bendonly.pt
-checkpoints/bendability_stage1_data1_flex0p2.pt
-checkpoints/bendstage_flexmlm_data1.pt
-checkpoints/bendstage_bendflexmlm_data1.pt
-```
+## Roadmap
 
-Checkpoints are usually not committed to git because they can be large. If sharing checkpoints publicly, use GitHub Releases, Zenodo, Google Drive, or another artifact storage mechanism.
+1. Implement and validate the true S0 sequence-only MLM baseline.
+2. Add S1 masked prediction of individual normalized physical features.
+3. Fit separate training-only base and base-step PCA artifacts for S2a.
+4. Train, validate, and freeze the independent physical compressor for S2b.
+5. Run matched multi-seed S0/S1/S2a/S2b pretraining comparisons.
+6. Compare 1-mer, 3-mer, and 6-mer tokenizers under matched corruption.
+7. Run common downstream, reduced-data, and transfer evaluations.
+8. Analyze learned sequence representations and biophysical components.
+9. Consider offline DeepDNAshape and processed hexABC providers.
 
----
+## Legacy prototype code and results
 
-## Example workflows
+The repository retains an earlier overlapping 6-mer flex+MLM prototype,
+bendability-stage experiments, and gcPBM/HT-SELEX benchmark scripts. Those
+experiments explored useful ideas, but they used a different target alignment,
+modeling protocol, and downstream setup from the active systematic study.
 
-Always run from the repository root:
+Legacy checkpoints, scripts, plots, and prior observations are kept for
+reference and comparison. They must not be interpreted as results from the
+S0/S1/S2 experimental design, and old training scripts should not be used as
+the new systematic workflow without being updated to the current
+specification.
 
-```bash
-export PYTHONPATH="$(pwd)"
-```
+## Progress report
 
-### hg38 flex+MLM pretraining
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/pretrain/pretrain_hg38_tiny_trainval.py
-```
-
-### Bendability stage 1: bend only
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/pretrain/pretrain_bendability_stage1.py \
-  --split_dir data/raw/bendability/Data1 \
-  --epochs 15 \
-  --patience 4 \
-  --batch_size 256 \
-  --encoder_lr 1e-5 \
-  --head_lr 1e-3 \
-  --lambda_flex 0.0 \
-  --out checkpoints/bendability_stage1_data1_bendonly.pt
-```
-
-### Bendability stage 2: bend+flex+MLM
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/pretrain/pretrain_bendability_stage2_mlm.py \
-  --split_dir data/raw/bendability/Data1 \
-  --epochs 10 \
-  --patience 3 \
-  --batch_size 256 \
-  --encoder_lr 1e-5 \
-  --head_lr 1e-3 \
-  --lambda_mlm 0.1 \
-  --lambda_flex 1.0 \
-  --lambda_bend 1.0 \
-  --out checkpoints/bendstage_bendflexmlm_data1.pt
-```
-
-### HT-SELEX benchmark
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/benchmark/benchmark_htselex_option2_panelA.py \
-  --limit_files 215 \
-  --outer_folds 10 \
-  --inner_folds 5 \
-  --seed 0 \
-  --out_prefix plots/htselex_option2_all215_seed0
-```
-
-Add the custom 1-mer + 12-flex baseline:
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/benchmark/add_htselex_1mer12flex.py \
-  --existing_csv plots/htselex_option2_all215_seed0.csv \
-  --lookup_yaml data/raw/flex_tables/lookup.yaml \
-  --folder data/raw/htselex \
-  --seed 0 \
-  --outer_folds 10 \
-  --inner_folds 5 \
-  --out_prefix plots/htselex_option2_all215_seed0_plus12flex
-```
-
-### gcPBM four-checkpoint benchmark
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/benchmark/benchmark_gcpbm_four_checkpoints.py
-```
-
-Plot the four-model comparison:
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/plot/plot_gcpbm_4model_boxplot.py \
-  --bend_only_csv plots/gcpbm_bendonly.csv \
-  --bend_flex_csv plots/gcpbm_bendflex.csv \
-  --flex_mlm_csv plots/gcpbm_flexmlm.csv \
-  --bend_flex_mlm_csv plots/gcpbm_bendflexmlm.csv \
-  --out_csv plots/gcpbm_4model_merged.csv \
-  --out_png plots/gcpbm_4model_boxplot.png
-```
-
-### gcPBM sample-efficiency / Panel C
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/benchmark/panelC_gcpbm_sample_efficiency.py \
-  --pcts 0.3 1 3 10 30 100 \
-  --seeds 0 1 2 \
-  --out_csv plots/panelC_gcpbm_sample_efficiency.csv \
-  --out_png plots/panelC_gcpbm_sample_efficiency.png
-```
-
-Optional no-error-bar replot:
-
-```bash
-PYTHONPATH="$(pwd)" python scripts/plot/replot_panelC_gcpbm_no_errorbar.py \
-  --csv plots/panelC_gcpbm_sample_efficiency.csv \
-  --out_png plots/panelC_gcpbm_sample_efficiency_noerr.png
-```
-
----
-
-## Current limitations
-
-- HT-SELEX transfer is promising but does not consistently beat strong explicit 3-mer baselines.
-- Bendability supervision is biologically meaningful but does not yet improve transfer beyond flex+MLM in the current setup.
-- Most experiments use frozen encoder features with simple downstream readouts; full fine-tuning may improve results.
-- Model size, tokenization strategy, and loss weighting have not been fully optimized.
-- Formal statistical testing for all comparisons is still needed.
-
----
-
-## Future directions
-
-1. Add paired statistical testing for HT-SELEX and gcPBM.
-2. Test low-data transfer more directly on HT-SELEX.
-3. Test hybrid models that combine pretrained embeddings with explicit k-mer or flexibility features.
-4. Tune flex / MLM / bendability loss weights.
-5. Try larger transformer encoders or alternative tokenization.
-6. Add biological interpretability by mapping motif and flank positions important in the pretrained representation.
-7. Extend to in-vivo TF binding using ChIP-seq / DNase-seq benchmarks.
-8. Explore richer mechanics targets such as shape, stiffness, bendability, and DNA breathing.
-
----
+A concise lab-meeting summary of the current branch is available in
+[Advisor progress report — July 28, 2026](docs/advisor_progress_2026-07-28.md).
 
 ## References
 
-- Vaswani et al. 2017. Attention Is All You Need.
-- Devlin et al. 2019. BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.
-- Ji et al. 2021. DNABERT: Pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome.
-- Yang et al. 2017. Transcription factor family-specific DNA shape readout revealed by quantitative specificity models.
-- Zhou et al. 2015. Quantitative modeling of transcription factor binding specificities using DNA shape.
-- Basu et al. 2021. Measuring DNA mechanics on the genome scale.
-- Jiang et al. 2023. Assessing base-resolution DNA mechanics on the genome scale.
-- Dey, Yella, and Kumar. DNA conformational flexibility descriptors improve transcription factor binding prediction across diverse transcription factor families.
+- Vaswani et al. 2017. *Attention Is All You Need.*
+- Devlin et al. 2019. *BERT: Pre-training of Deep Bidirectional Transformers
+  for Language Understanding.*
+- Ji et al. 2021. *DNABERT: Pre-trained Bidirectional Encoder Representations
+  from Transformers model for DNA-language in genome.*
+- Yang et al. 2017. *Transcription factor family-specific DNA shape readout
+  revealed by quantitative specificity models.*
+- Zhou et al. 2015. *Quantitative modeling of transcription factor binding
+  specificities using DNA shape.*
+- Basu et al. 2021. *Measuring DNA mechanics on the genome scale.*
+- Jiang et al. 2023. *Assessing base-resolution DNA mechanics on the genome
+  scale.*
+- Dey, Yella, and Kumar. *DNA conformational flexibility descriptors improve
+  transcription factor binding prediction across diverse transcription factor
+  families.*
