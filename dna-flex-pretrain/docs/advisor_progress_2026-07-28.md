@@ -1,4 +1,4 @@
-# Progress Report — July 28, 2026
+# Progress Report — July 27, 2026
 
 ## Big picture
 
