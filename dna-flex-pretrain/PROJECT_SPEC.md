@@ -1,39 +1,43 @@
-# Scientific question
+# Active scientific question
 
-Does DNA biophysical auxiliary pretraining improve transferability, data
-efficiency, and interpretability of DNA foundation models for in vitro
-TF-DNA binding prediction when downstream inference uses DNA sequence only?
+Can a DNA Transformer pretrained with true sequence-only MLM (S0) or with
+matched individual biophysical auxiliary targets (S1) reach the performance of
+a CNN-RC trained from scratch while using fewer labeled Exd-Hox SELEX-seq
+examples?
 
-# Experimental axes
+The secondary question is whether S1 improves low-data performance over S0
+when both conditions use the same encoder, pretraining data, corruption,
+optimization budget, and downstream protocol. Downstream inference for S0 and
+S1 uses DNA sequence only.
 
-The study must keep the following axes independent:
+# Active Milestone 3A scope
+
+The active experimental choices are deliberately narrow:
 
 1. Transformer tokenizer:
-   - primary: 1-mer;
-   - ablation: overlapping stride-one 3-mer;
-   - legacy ablation: overlapping stride-one 6-mer.
+   - active: 1-mer only;
+   - deferred: overlapping stride-one 3-mer and legacy 6-mer comparisons.
 
 2. Physical-feature source:
-   - initial: existing dinucleotide and trinucleotide lookup tables;
-   - future: offline DeepDNAshape outputs;
-   - future: processed hexABC features.
+   - active: the existing dinucleotide and trinucleotide lookup provider;
+   - deferred: PCA components, learned compressors, DeepDNAshape, and hexABC.
 
 3. Pretraining objective:
-   - S0;
-   - S1;
-   - S2a;
-   - S2b;
-   - deferred S3;
-   - deferred S4.
+   - active: S0 and S1;
+   - deferred: S2a, S2b, S3, S4, and other component or input-fusion methods.
 
-4. Downstream predictor:
-   - primary: XGBoost;
-   - secondary diagnostic: Ridge or another fixed linear probe.
+4. Downstream comparison:
+   - primary external scratch baseline: artifact-backed 100-filter CNN-RC;
+   - controlled Transformer conditions: random initialization, S0, and S1;
+   - primary adaptation: frozen encoder with a shared sequence-regression head;
+   - secondary adaptation: end-to-end Transformer fine-tuning;
+   - deferred diagnostics: XGBoost, Ridge, raw positional k-mers, and
+     32-filter CNN-RC.
 
-Do not conflate tokenizer k, physical-feature context length, pretraining
-objective, or downstream predictor.
+Tokenizer k, physical-feature context length, pretraining objective, model
+family, and downstream adaptation must remain independently identified.
 
-# Primary controlled comparison
+# Active controlled pretraining comparison
 
 ## S0: sequence-only MLM
 
@@ -51,7 +55,10 @@ Loss:
 
 Downstream use:
 
-- frozen sequence embeddings derived from DNA sequence only.
+- primary: frozen sequence embeddings derived from DNA sequence only;
+- secondary: end-to-end fine-tuning with the shared Transformer regression
+  head;
+- no non-sequence downstream input.
 
 ## S1: individual physical-feature auxiliary prediction
 
@@ -76,109 +83,17 @@ of the target feature lies inside a corrupted base span.
 
 Downstream use:
 
-- frozen sequence embeddings derived from DNA sequence only;
-- auxiliary predictions are not primary downstream inputs.
-
-## S2a: fixed PCA physical components
-
-Input:
-
-- corrupted DNA sequence only.
-
-Targets:
-
-- original bases;
-- fixed PCA component scores derived from standardized physical features.
-
-PCA must be fit using pretraining training-split physical values only.
-Base-centered and base-step-centered features must initially use separate PCA
-models.
-
-Loss:
-
-- base-level MLM cross-entropy;
-- masked regression to fixed PCA scores.
-
-Downstream use:
-
-- frozen sequence embeddings derived from DNA sequence only.
-
-## S2b: frozen learned physical components
-
-Input:
-
-- corrupted DNA sequence only.
-
-Targets:
-
-- original bases;
-- codes produced by a separately trained and frozen physical-feature
-  compressor.
-
-The compressor:
-
-- is trained only on standardized physical-feature vectors from the
-  pretraining training split;
-- receives no DNA sequence, TF labels, TF protein information, validation-test
-  statistics, or downstream labels;
-- is frozen before sequence-model pretraining;
-- has no gradient path from the sequence model.
-
-Loss:
-
-- base-level MLM cross-entropy;
-- masked regression to frozen compressor codes.
-
-Downstream use:
-
-- frozen sequence embeddings derived from DNA sequence only.
-
-# Deferred secondary conditions
-
-## S3: physical-feature input projection
-
-Input:
-
-- corrupted DNA sequence;
-- explicitly supplied physical-feature projection.
-
-Target:
-
-- original bases.
-
-Loss:
-
-- MLM cross-entropy.
-
-S3 is deferred until S0, S1, S2a, and S2b work. It is not part of the primary
-sequence-only downstream comparison because it may require physical features
-during downstream inference.
-
-## S4: physical input plus auxiliary prediction
-
-Input:
-
-- corrupted DNA sequence;
-- explicitly supplied physical-feature projection.
-
-Targets:
-
-- original bases;
-- physical features or frozen physical components.
-
-Loss:
-
-- MLM cross-entropy;
-- masked physical auxiliary loss.
-
-S4 is deferred and must be reported as a separate inference condition.
+- primary: frozen sequence embeddings derived from DNA sequence only;
+- secondary: end-to-end fine-tuning with the shared Transformer regression
+  head;
+- auxiliary predictions are not downstream inputs.
 
 # Shared controls
 
-S0, S1, S2a, and S2b must use the same:
+S0 and S1 must use the same:
 
 - encoder architecture;
-- tokenizer for comparisons within a tokenizer condition;
+- 1-mer tokenizer and vocabulary;
 - pretraining sequences;
 - base-coordinate corruption manifests;
 - number of optimization steps;
@@ -187,14 +102,16 @@ S0, S1, S2a, and S2b must use the same:
 - approximate parameter count;
 - checkpoint-selection budget;
 - downstream split manifests;
-- downstream training fractions;
-- XGBoost outer folds and inner validation folds;
-- XGBoost hyperparameter-search budget;
+- immutable nested downstream subsets;
+- downstream regression-head architecture;
+- validation access and hyperparameter-search count;
 - downstream metrics;
 - random seeds.
 
-The main tokenizer comparison must use the same base-coordinate corruption
-pattern so that 1-mer, 3-mer, and 6-mer models see the same corrupted bases.
+The S1 auxiliary heads may add parameters outside the shared encoder, but the
+encoder itself must be identical to S0. TF-binding labels and TF protein
+information remain completely absent from pretraining. S0 and S1 checkpoints
+must be selected without downstream TF labels.
 
 # Canonical coordinate system
 
@@ -308,7 +225,13 @@ Use training-split statistics for training, validation, and test data.
 Do not use per-sequence or per-window normalization as a fallback.
 Incompatible or missing normalization artifacts must fail closed.
 
-# Interpretable physical subspace
+# Deferred physical-component expansion
+
+S2a, S2b, PCA fitting, learned compressors, and other physical-component
+experiments are not active Milestone 3A work. The following constraints are
+retained for a later, separately approved phase.
+
+## Interpretable physical subspace
 
 Use separate low-dimensional projections for:
 
@@ -323,10 +246,11 @@ Distinguish:
 - sequence-position weights, which determine which positions matter for a
   particular TF.
 
-Use global physical components during pretraining.
+Future component conditions may use global physical components during
+pretraining.
 Defer learned sequence-position weighting to downstream TF-specific models.
 
-# Fixed PCA components
+## S2a: fixed PCA components
 
 Fit PCA separately for base-centered and base-step-centered feature groups
 using standardized training-split values only.
@@ -351,7 +275,7 @@ Align components across seeds before reporting stability.
 For degenerate components, report subspace stability rather than only
 individual loading correlation.
 
-# Frozen physical-feature compressor
+## S2b: frozen physical-feature compressor
 
 Train the compressor separately from the sequence model.
 
@@ -381,9 +305,18 @@ Save:
 Do not jointly learn the component definition with the sequence model in S2a
 or S2b.
 
+## S3 and S4: physical-feature input fusion
+
+S3 and S4 remain separate, deferred inference conditions because they supply
+physical information to the sequence model input. They must not replace the
+primary sequence-only downstream comparison or be described as directly
+comparable to S0/S1 without disclosing the additional inference input.
+
 # Physical auxiliary losses
 
-Use named losses and metrics for each raw feature or component.
+Active S1 uses named losses and metrics for each raw feature. Any future
+component condition must apply the same validity and support rules to its named
+component losses.
 
 Apply a target only when:
 
@@ -394,122 +327,247 @@ Apply a target only when:
 Do not treat padding, ambiguous bases, unavailable provider values, or
 out-of-range coordinates as valid zero-valued targets.
 
-# Downstream evaluation
+# Active Exd-Hox SELEX benchmark
 
-TF-binding labels must remain completely absent from pretraining.
+The first downstream benchmark is the eight-TF Exd-Hox SELEX-seq dataset from
+Wang et al. It contains AbdA, AbdB, Antp, Dfd, Lab, Pb, Scr, and Ubx relative
+affinities for unaligned 14-mer DNA sequences.
 
-Primary downstream inputs for S0, S1, S2a, and S2b are DNA sequence only.
-Physical targets, physical predictions, PCA scores, and compressor codes are
-not supplied to the primary downstream predictor.
+Source requirements:
 
-## Common XGBoost probe
+- official repository commit:
+  `9e6d6ef0355558c98855b83a9c21fe11999f65d9`;
+- source directory: `CNN_models/data/SELEX_canonical`;
+- imported source files must be bound to exact byte sizes and SHA-256 hashes;
+- HDF5 sequence, one-hot, target, dtype, range, and validity checks must fail
+  closed.
 
-Use XGBoost as the primary common downstream predictor for:
+`SELEX_canonical` and `SELEX_RCmodel` are byte-identical for every train/test
+file. `SELEX_RCmodel` is only a legacy architecture-routing duplicate and must
+not be treated as independent data.
 
-- raw positional 1-mer features;
-- raw positional 2-mer features;
-- raw positional 3-mer features;
-- frozen sequence embeddings from S0;
-- frozen sequence embeddings from S1;
-- frozen sequence embeddings from S2a;
-- frozen sequence embeddings from S2b.
+The supplied split contains 91 exact labeled-row train/test overlaps: AbdA 2,
+Pb 85, and Ubx 4. The overlaps have identical labels. There are no RC-only
+train/test overlaps and no exact- or RC-equivalent label conflicts.
 
-The primary frozen-embedding representation is the concatenation of fixed
-masked mean and masked maximum pooling over the canonical base lattice.
+## Paper-reproduction protocol
 
-A position-aware flattened base-lattice probe may be reported separately for
-fixed-length assays.
+The supplied train/test split may be used unchanged only in a result namespace
+labeled `paper_split_reproduction`. Every table and figure from this protocol
+must disclose the 91 exact overlaps. It is for paper comparison, not the
+primary scientific claim.
 
-Ridge may be retained as a secondary linear diagnostic.
+The paper-facing CNN-RC uses the artifact-backed 100-filter architecture. The
+32-filter implementation is an ablation. The original Python 2/Keras stack is
+not the maintained implementation; any legacy validation use requires separate
+approval, explicit labeling, and isolation from the project environment.
 
-## Shared downstream protocol
+## Primary scientific split
 
-All compared conditions must use identical:
+The primary protocol must:
 
-- example IDs;
-- sequence and reverse-complement-canonical hashes;
-- outer folds;
-- inner validation folds;
-- sampled training fractions;
-- random seeds;
-- label preprocessing;
-- XGBoost hyperparameter candidates;
-- hyperparameter-search count;
-- maximum boosting rounds;
-- early-stopping rule;
-- evaluation metrics.
+1. combine the TF-specific canonical source partitions while retaining source
+   occurrence provenance;
+2. assign stable example IDs, exact sequence hashes, and RC-canonical hashes;
+3. keep every exact or RC-equivalent sequence group in exactly one of train,
+   validation, or test;
+4. preserve all conflicting-label evidence and fail closed rather than average
+   or impute it;
+5. create the split before any RC augmentation;
+6. use the same immutable split manifest for every model condition;
+7. seal the test set after the manifest and evaluation policy are fixed.
 
-The outer test fold must not influence preprocessing, early stopping,
-hyperparameter selection, thresholds, or feature construction.
+The split proportions, stratification rule, treatment of exact duplicate
+occurrences, and seed must be approved and recorded before the split is
+generated. No downstream result may be used to choose among candidate split
+policies.
 
-Initial labeled-data fractions:
+# Controlled downstream models
 
-- 1%;
-- 5%;
-- 10%;
-- 25%;
-- 50%;
-- 100%.
+The required comparison matrix is:
 
-Fractions must be nested within each outer training fold.
+| Model | Initialization | Primary adaptation | Secondary adaptation |
+|---|---|---|---|
+| CNN-RC | random | train from scratch | none |
+| Random Transformer | random | frozen-encoder sanity control | train end to end |
+| S0 Transformer | S0 checkpoint | freeze encoder | fine-tune encoder and head |
+| S1 Transformer | S1 checkpoint | freeze encoder | fine-tune encoder and head |
 
-Primary metrics:
+All Transformer conditions use the same encoder architecture, base-lattice
+pooling, and sequence-regression head. The primary frozen representation is
+the concatenation of masked mean and masked maximum pooling over the canonical
+base lattice.
 
-- R2;
+TF-binding labels remain absent from pretraining. Primary downstream inputs
+are DNA sequence only. Physical targets, predictions, PCA scores, compressor
+codes, and TF protein information are not downstream inputs.
+
+XGBoost, Ridge, raw positional k-mer probes, and other predictors are deferred
+optional diagnostics. They do not replace the active neural comparison and
+must not add a production dependency without explicit approval.
+
+# Low-data subsets
+
+Low-data subsets must be immutable manifests generated from primary training
+groups only. For each TF and subset seed, create one deterministic ordered list
+and define every smaller subset as a prefix. CNN-RC, random Transformer, S0,
+and S1 must use the same example IDs at every requested size.
+
+The absolute counts or fractions must be approved from the audited primary
+training-set sizes and fixed before test access. Every result must report both
+the requested size and the actual number of labeled rows and unique RC groups.
+Generated reverse complements do not count as new labels.
+
+# Random seeds and model selection
+
+- Use multiple paired experiment seeds fixed before evaluation.
+- Pair S0 and S1 pretraining seeds and base-corruption manifests.
+- Pair downstream subset, initialization, data-order, and augmentation seeds
+  across model conditions where the concepts apply.
+- Seed Python, NumPy, model-framework, data-loader, and accelerator RNGs.
+- Record deterministic-kernel settings and known nondeterministic operations.
+- Give every model family the same number of hyperparameter candidates,
+  validation evaluations, allowed restarts, and checkpoint-selection access.
+- Architecture-specific search spaces are permitted, but their identities and
+  budgets must be fixed before test access.
+- Training and validation may control preprocessing, early stopping, and model
+  selection. Test labels may not.
+
+The primary test set is sealed. Final test evaluation must be a separate
+operation that requires frozen data, split, subset, configuration, selection,
+and run identities and writes a test-access record. A later protocol change
+creates a new study identity; it does not overwrite or silently reevaluate the
+old study.
+
+# Reverse-complement policy
+
+- Group exact and RC-equivalent sequences before splitting or sampling.
+- Apply the same documented on-the-fly orientation policy to every downstream
+  condition.
+- At inference, use the same forward/RC prediction aggregation for all models.
+- CNN-RC must pass an explicit `f(x) == f(RC(x))` numerical-tolerance test.
+- Handle palindromes without double-counting.
+- RC augmentation must not alter labeled-example counts or search budgets.
+
+# Metrics and success criteria
+
+The primary paper-comparable metric is R-squared, calculated as
+`1 - SSE / SST` on the sealed test data. It must not be replaced by squared
+Pearson correlation.
+
+Also report:
+
 - Pearson correlation;
 - Spearman correlation;
-- RMSE.
+- RMSE;
+- low-affinity-stratified performance using thresholds defined from training
+  data only;
+- per-seed values and paired uncertainty;
+- per-TF values and equal-TF-weighted aggregate summaries.
 
-Use paired fold- and seed-level comparisons.
+Before test access, pre-specify:
 
-# Transferability protocols
+- the non-inferiority margin defining "same performance as CNN-RC";
+- the full-data CNN-RC reference for each TF;
+- the smallest nested label count that qualifies as a match;
+- the data-efficiency ratio;
+- the paired S1-minus-S0 primary statistic and uncertainty method;
+- multiplicity handling for secondary per-size comparisons.
 
-Evaluate:
+If a model never meets the CNN-RC criterion, report the label requirement as
+right-censored. Do not infer success from a noisy one-point learning-curve
+crossing.
 
-- per-TF within-dataset performance;
-- protocol generalization to held-out TFs;
-- protocol generalization to held-out TF families;
-- same-TF cross-assay transfer where label semantics are compatible;
-- HT-SELEX, PBM, gcPBM, and later SELEX-seq.
+# Experiment results and figures
 
-A sequence-only predictor trained across unrelated TF labels must not be
-described as zero-shot TF transfer without an explicit TF-conditioning
-mechanism.
+Training, evaluation, aggregation, and plotting must be separate operations.
+Plotting reads finalized machine-readable tables and must not load checkpoints
+or recompute test predictions.
 
-TF protein embeddings remain excluded from the primary study. They may be
-introduced later only as an explicitly separate downstream condition.
+Every run and metric row must identify:
+
+- schema, study, run, data, split, subset-set, and subset IDs;
+- project and external-source commits;
+- TF, model family, pretraining condition, and adaptation mode;
+- tokenizer, RC policy, and checkpoint hash;
+- requested and actual label counts;
+- split, subset, pretraining, downstream, and search seeds;
+- search-space identity, budget, selected hyperparameters, and config hash;
+- evaluation split, stratum, metric name, value, and sample count.
+
+Required figure families are:
+
+1. dataset counts and affinity distributions;
+2. CNN-RC low-data learning curves;
+3. CNN-RC, random Transformer, S0, and S1 learning curves;
+4. paired S1-minus-S0 difference curves;
+5. labels required to match the full-data CNN-RC reference;
+6. per-TF and equal-TF-weighted aggregate summaries;
+7. means and uncertainty across paired seeds.
+
+Each figure must have machine-readable source data and a provenance sidecar
+binding it to the config, data, split, subset, run, metric-table, and code
+identities.
+
+Run and figure paths are immutable and content-addressed. Exclusive creation is
+the default. A repeated identity with different content fails; a changed input
+or configuration creates a new identity. Completed results, figures,
+checkpoints, and prior experiment outputs must not be overwritten or deleted
+without approval.
 
 # Data-leakage controls
 
 Persist and audit:
 
-- exact sequence overlap;
-- reverse-complement-equivalent overlap;
-- genomic-window overlap;
-- TF overlap;
-- TF-family overlap;
-- assay overlap;
-- repeated probe overlap;
-- near-duplicate sequence groups where relevant.
+- exact and RC-equivalent sequence overlap;
+- duplicate labeled rows and conflicting labels;
+- genomic-window and locus overlap in pretraining data;
+- TF, TF-family, and assay overlap;
+- repeated probes and near-duplicate sequence groups where relevant.
 
-Preserve genomic coordinates when creating pretraining windows.
-Do not split sampled genome sequence strings after discarding their source
-coordinates.
+Preserve genomic coordinates when creating pretraining windows. Do not split
+sampled genome strings after discarding the coordinates required to detect
+overlap.
 
-# Initial implementation order
+# Completed foundation and legacy boundary
 
-1. Factorized experiment configuration.
-2. Canonical base/base-step coordinates and split manifests.
-3. 1-mer, 3-mer, and 6-mer tokenizers with base-span corruption.
-4. Existing lookup-table feature provider.
-5. Training-only normalization artifacts.
-6. Separate base and step PCA artifacts.
-7. Separately trained and frozen physical compressor.
-8. S0, S1, S2a, and S2b model/loss framework.
-9. Tiny synthetic-data and leakage tests.
-10. Common XGBoost downstream benchmark.
-11. Multi-seed lookup-feature study.
-12. Future offline DeepDNAshape and hexABC providers.
+The canonical base/base-step coordinate system, coordinate-aware tokenization,
+lookup-table provider, coordinate-preserving hg38 split and leakage audits, and
+training-only normalization artifact are completed foundations and remain in
+force.
 
-S3 and S4 remain deferred until the primary sequence-only comparison is
-complete.
+The current overlapping 6-mer flex+MLM model, token-level corruption,
+token-averaged physical targets, permissive checkpoint loads, existing
+checkpoints, and legacy PBM/HT-SELEX/gcPBM results are not true S0 or S1. They
+must remain labeled legacy and cannot support Milestone 3A performance claims.
+
+No controlled S0, S1, or CNN-RC Milestone 3A experiment has been run. The
+project must not claim that biophysical supervision improves binding
+prediction until the specified experiments are complete.
+
+# Deferred work
+
+The following remain outside active Milestone 3A scope:
+
+- S2a fixed PCA components;
+- S2b frozen learned physical components;
+- DeepDNAshape and hexABC providers;
+- S3/S4 physical-feature input fusion;
+- 3-mer and 6-mer tokenizer comparisons;
+- 32-filter CNN-RC;
+- XGBoost, Ridge, and raw positional k-mer diagnostics;
+- held-out-TF, held-out-family, and cross-assay transfer;
+- TF protein embeddings or other explicit TF-conditioning mechanisms.
+
+A sequence-only predictor trained across unrelated TF labels must not be
+described as zero-shot TF transfer without explicit TF conditioning.
+
+# Milestone 3A implementation order
+
+1. Documentation pivot.
+2. External-data import and audit.
+3. Downstream split and subset manifests.
+4. CNN-RC reproduction.
+5. True S0.
+6. S1.
+7. Controlled low-data experiments and figures.
