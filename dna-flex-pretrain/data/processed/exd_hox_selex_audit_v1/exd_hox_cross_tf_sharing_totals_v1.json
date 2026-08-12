@@ -1,0 +1,35 @@
+{
+  "group_types": {
+    "exact_sequence": {
+      "group_count_by_transcription_factor_count": {
+        "2": 28801,
+        "3": 11332,
+        "4": 7317,
+        "5": 5009,
+        "6": 1492,
+        "7": 888,
+        "8": 1114
+      },
+      "maximum_transcription_factor_count": 8,
+      "row_occurrences_in_shared_groups": 169998,
+      "shared_group_count": 55953
+    },
+    "reverse_complement_equivalent": {
+      "group_count_by_transcription_factor_count": {
+        "2": 25798,
+        "3": 10692,
+        "4": 6613,
+        "5": 8224,
+        "6": 2457,
+        "7": 1569,
+        "8": 2056
+      },
+      "maximum_transcription_factor_count": 8,
+      "row_occurrences_in_shared_groups": 193424,
+      "shared_group_count": 57409
+    }
+  },
+  "manifest_hash": "215a2ce640339ed9dafc804f4cda167909235e6a651af339226fe21a339bafb9",
+  "schema_version": "exd_hox_cross_tf_sharing_totals.v1",
+  "source_table_path": "data/processed/exd_hox_selex_audit_v1/exd_hox_cross_tf_sharing_summary_v1.tsv"
+}

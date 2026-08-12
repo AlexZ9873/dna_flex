@@ -1,0 +1,98 @@
+{
+  "artifacts": [
+    {
+      "byte_size": 20169,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_affinity_histogram_v1.tsv",
+      "sha256": "bc879ddd7b29915937377113e04ac6e8219e5e68fca2f41d690c8681f6d3f785"
+    },
+    {
+      "byte_size": 3552,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_affinity_summary_v1.tsv",
+      "sha256": "873c7460a0d977c17d49edbdd793eeb47337285a306b9ea79ecec0ed242397e8"
+    },
+    {
+      "byte_size": 17919060,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_cross_tf_sharing_summary_v1.tsv",
+      "sha256": "eea28d3e963674f7dd9bb402fac5eb04572cb800bc5d7230f5e03098cb5e565b"
+    },
+    {
+      "byte_size": 1005,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_cross_tf_sharing_totals_v1.json",
+      "sha256": "1b23e523f6873399bc1dae0e5d059afe4659b754494e4a0802d3771fa4ca73ec"
+    },
+    {
+      "byte_size": 4015,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_hdf5_inventory_v1.tsv",
+      "sha256": "cf396ba8d11e026ac9ec137f46bdee92d4adfef8889b82b69f8a78f08eb4b73b"
+    },
+    {
+      "byte_size": 412,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_per_tf_count_summary_v1.tsv",
+      "sha256": "b33eaee5dcf084d4455b1922291ab4fd6551f89bd5260d3bb1a1dd716180a97a"
+    },
+    {
+      "byte_size": 10024,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_source_manifest_v1.json",
+      "sha256": "0ec3e8c21218482be523d4734d333d1376c146123ea059452f983610451f2138"
+    },
+    {
+      "byte_size": 17207,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_supplied_split_exact_overlaps_v1.tsv",
+      "sha256": "73bfc7711b0629b63fb818151e432cd50be0862120b190c752f4dd5200722ce9"
+    },
+    {
+      "byte_size": 400,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_supplied_split_leakage_summary_v1.tsv",
+      "sha256": "8c37826b0386cd21463915205adda47e6cf024ac85b516fc5e0b054b3268a86e"
+    },
+    {
+      "byte_size": 1024,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_within_tf_duplicate_summary_v1.tsv",
+      "sha256": "e24df255c707ec59096500a18d9c295b70d366d15cb2fb4ae2761175053883a0"
+    }
+  ],
+  "audit_directory": "data/processed/exd_hox_selex_audit_v1",
+  "config_path": "configs/exd_hox_selex_import_v1.yaml",
+  "config_sha256": "6ea3ed6b94ce68f0377266b308795d083eb6816c5f50ad86cc98c9523d344ef5",
+  "dataset_identifier": "wang_etal_exd_hox_selex_canonical.v1",
+  "manifest_hash": "745aa5a2f3d9a04cafd1fe473c89afa6248d5bfb2b12617412acd2cc44e64627",
+  "schema_version": "exd_hox_audit_manifest.v1",
+  "source_manifest_hash": "ee671406684cfebdd0c89f6bc764b2b14ec0a7ea6f024a18752506a45e5c1be3",
+  "source_manifest_path": "data/processed/exd_hox_selex_audit_v1/exd_hox_source_manifest_v1.json",
+  "totals": {
+    "cross_tf_sharing": {
+      "exact_sequence": {
+        "group_count_by_transcription_factor_count": {
+          "2": 28801,
+          "3": 11332,
+          "4": 7317,
+          "5": 5009,
+          "6": 1492,
+          "7": 888,
+          "8": 1114
+        },
+        "maximum_transcription_factor_count": 8,
+        "row_occurrences_in_shared_groups": 169998,
+        "shared_group_count": 55953
+      },
+      "reverse_complement_equivalent": {
+        "group_count_by_transcription_factor_count": {
+          "2": 25798,
+          "3": 10692,
+          "4": 6613,
+          "5": 8224,
+          "6": 2457,
+          "7": 1569,
+          "8": 2056
+        },
+        "maximum_transcription_factor_count": 8,
+        "row_occurrences_in_shared_groups": 193424,
+        "shared_group_count": 57409
+      }
+    },
+    "exact_labeled_row_train_test_overlaps": 91,
+    "test_rows": 92313,
+    "total_row_occurrences": 461572,
+    "training_rows": 369259
+  }
+}

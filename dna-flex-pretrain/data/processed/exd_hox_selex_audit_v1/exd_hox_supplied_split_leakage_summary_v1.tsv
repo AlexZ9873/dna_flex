@@ -1,0 +1,9 @@
+transcription_factor	exact_sequence_overlap_group_count	exact_labeled_row_overlap_count	reverse_complement_equivalent_overlap_group_count	reverse_complement_only_overlap_group_count	exact_conflicting_label_group_count	reverse_complement_conflicting_label_group_count
+AbdA	2	2	2	0	0	0
+AbdB	0	0	0	0	0	0
+Antp	0	0	0	0	0	0
+Dfd	0	0	0	0	0	0
+Lab	0	0	0	0	0	0
+Pb	85	85	85	0	0	0
+Scr	0	0	0	0	0	0
+Ubx	4	4	4	0	0	0

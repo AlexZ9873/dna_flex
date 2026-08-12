@@ -4,3 +4,4 @@ pyyaml
 scikit-learn
 tqdm
 biopython
+h5py>=3.12

@@ -1,0 +1,9 @@
+transcription_factor	row_occurrences	unique_exact_sequences	exact_duplicate_sequence_group_count	exact_duplicate_sequence_extra_occurrence_count	unique_exact_labeled_rows	exact_labeled_row_duplicate_group_count	exact_labeled_row_duplicate_extra_occurrence_count	unique_reverse_complement_groups	reverse_complement_duplicate_group_count	reverse_complement_duplicate_extra_occurrence_count	reverse_complement_only_group_count	self_reverse_complement_unique_sequence_count	self_reverse_complement_row_occurrence_count	exact_conflicting_label_group_count	reverse_complement_conflicting_label_group_count
+AbdA	25065	25063	2	2	25063	2	2	25063	2	2	0	5	5	0	0
+AbdB	41463	41463	0	0	41463	0	0	41463	0	0	0	30	30	0	0
+Antp	30767	30767	0	0	30767	0	0	30767	0	0	0	26	26	0	0
+Dfd	26642	26642	0	0	26642	0	0	26642	0	0	0	21	21	0	0
+Lab	32559	32559	0	0	32559	0	0	32559	0	0	0	12	12	0	0
+Pb	228113	228028	85	85	228028	85	85	228028	85	85	0	83	83	0	0
+Scr	34488	34488	0	0	34488	0	0	34488	0	0	0	10	10	0	0
+Ubx	42475	42471	4	4	42471	4	4	42471	4	4	0	0	0	0	0

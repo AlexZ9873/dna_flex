@@ -1,0 +1,72 @@
+{
+  "config_path": "configs/exd_hox_selex_import_v1.yaml",
+  "config_sha256": "6ea3ed6b94ce68f0377266b308795d083eb6816c5f50ad86cc98c9523d344ef5",
+  "dataset_identifier": "wang_etal_exd_hox_selex_canonical.v1",
+  "input_audit_tables": [
+    {
+      "byte_size": 20169,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_affinity_histogram_v1.tsv",
+      "sha256": "bc879ddd7b29915937377113e04ac6e8219e5e68fca2f41d690c8681f6d3f785"
+    },
+    {
+      "byte_size": 412,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_per_tf_count_summary_v1.tsv",
+      "sha256": "b33eaee5dcf084d4455b1922291ab4fd6551f89bd5260d3bb1a1dd716180a97a"
+    },
+    {
+      "byte_size": 400,
+      "path": "data/processed/exd_hox_selex_audit_v1/exd_hox_supplied_split_leakage_summary_v1.tsv",
+      "sha256": "8c37826b0386cd21463915205adda47e6cf024ac85b516fc5e0b054b3268a86e"
+    }
+  ],
+  "manifest_hash": "3bafd4ea3d727b516ba07a005759034e400545b6e19a04f636ec975baef97095",
+  "outputs": [
+    {
+      "byte_size": 22548,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_affinity_distributions_v1.pdf",
+      "sha256": "096f38306e86dd6ed1e73a1d2cfb32efae02aa5354574b15d44e9736184f9f0d"
+    },
+    {
+      "byte_size": 212822,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_affinity_distributions_v1.png",
+      "sha256": "592a7e03fe3eb53fd4f209781098e65a5651d0eeb6cce3bfd346235793738157"
+    },
+    {
+      "byte_size": 20169,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_affinity_plot_source_v1.tsv",
+      "sha256": "bc879ddd7b29915937377113e04ac6e8219e5e68fca2f41d690c8681f6d3f785"
+    },
+    {
+      "byte_size": 187,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_supplied_counts_plot_source_v1.tsv",
+      "sha256": "688d27514faeda77c54e15a2a753666a4eda8f7c46576e8e97cdcd0f5add7666"
+    },
+    {
+      "byte_size": 14408,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_supplied_counts_v1.pdf",
+      "sha256": "5680ce83794ed99351202d7664e89b96baa28d0eabb9dfa7c8ce18085b898b0f"
+    },
+    {
+      "byte_size": 48098,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_supplied_counts_v1.png",
+      "sha256": "68f9d3da245f58b70be0907a005b1bda5e647caa41ea51a81c8c97f34c49eb83"
+    },
+    {
+      "byte_size": 104,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_supplied_exact_overlaps_plot_source_v1.tsv",
+      "sha256": "509b621b0dd6a0f11f2db8a162b1057f4858969bf190d746c42a67a286b07848"
+    },
+    {
+      "byte_size": 16399,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_supplied_exact_overlaps_v1.pdf",
+      "sha256": "977d86ac5f92404ad6c4a01d772adbed7164f7f16f96f82deed7a8e8976ebdc2"
+    },
+    {
+      "byte_size": 44831,
+      "path": "plots/exd_hox_dataset_audit_v1/exd_hox_supplied_exact_overlaps_v1.png",
+      "sha256": "59e6b761d5900007f8747b3981ce8a1b439de9103593c64615e0a9a7594f1c04"
+    }
+  ],
+  "plot_directory": "plots/exd_hox_dataset_audit_v1",
+  "schema_version": "exd_hox_dataset_audit_plot_manifest.v1"
+}

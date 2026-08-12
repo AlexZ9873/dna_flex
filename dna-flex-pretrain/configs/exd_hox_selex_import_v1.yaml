@@ -1,0 +1,51 @@
+schema_version: exd_hox_selex_import_config.v1
+
+source:
+  repository_url: https://github.com/wangyingfei/cnn-sa-lowaffinity-tfbind.git
+  commit: 9e6d6ef0355558c98855b83a9c21fe11999f65d9
+  canonical_directory: CNN_models/data/SELEX_canonical
+  comparison_directory: CNN_models/data/SELEX_RCmodel
+
+dataset:
+  identifier: wang_etal_exd_hox_selex_canonical.v1
+  sequence_length: 14
+  one_hot_channel_order:
+    - A
+    - C
+    - G
+    - T
+  transcription_factors:
+    - AbdA
+    - AbdB
+    - Antp
+    - Dfd
+    - Lab
+    - Pb
+    - Scr
+    - Ubx
+
+outputs:
+  raw_directory: data/raw/exd_hox_selex_canonical_v1
+  audit_directory: data/processed/exd_hox_selex_audit_v1
+  plot_directory: plots/exd_hox_dataset_audit_v1
+
+audit:
+  affinity_histogram_bin_count: 50
+
+expected:
+  training_rows: 369259
+  test_rows: 92313
+  total_row_occurrences: 461572
+  exact_labeled_row_train_test_overlaps:
+    AbdA: 2
+    AbdB: 0
+    Antp: 0
+    Dfd: 0
+    Lab: 0
+    Pb: 85
+    Scr: 0
+    Ubx: 4
+  total_exact_labeled_row_train_test_overlaps: 91
+  total_reverse_complement_only_train_test_overlap_groups: 0
+  total_exact_train_test_conflicting_label_groups: 0
+  total_reverse_complement_train_test_conflicting_label_groups: 0

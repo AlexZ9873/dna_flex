@@ -82,3 +82,6 @@ __pycache__/
 
 # Milestone 2.5 coordinate-preserving hg38 pretraining split
 data/generated/hg38_pretraining_split_v1/
+
+# Milestone 3C pinned Wang et al. canonical Exd-Hox HDF5 import
+/data/raw/exd_hox_selex_canonical_v1/
