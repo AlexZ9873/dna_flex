@@ -1,0 +1,151 @@
+schema_version: exd_hox_primary_split_config.v1
+
+study:
+  identifier: exd_hox_primary_low_data.v1
+  dataset_identifier: wang_etal_exd_hox_selex_canonical.v1
+  project_commit: 62a99688cbd3af97f081df500223ba6f55cd0fe0
+  external_source_commit: 9e6d6ef0355558c98855b83a9c21fe11999f65d9
+
+inputs:
+  source_manifest_path: data/processed/exd_hox_selex_audit_v1/exd_hox_source_manifest_v1.json
+  source_manifest_hash: ee671406684cfebdd0c89f6bc764b2b14ec0a7ea6f024a18752506a45e5c1be3
+  source_manifest_file_sha256: 0ec3e8c21218482be523d4734d333d1376c146123ea059452f983610451f2138
+  audit_manifest_path: data/processed/exd_hox_selex_audit_v1/exd_hox_audit_manifest_v1.json
+  audit_manifest_hash: 745aa5a2f3d9a04cafd1fe473c89afa6248d5bfb2b12617412acd2cc44e64627
+  audit_manifest_file_sha256: bed99a5a5d179409d79a9da24831713eebfc170edac8a68c045ebe5e8d80cc95
+
+dataset:
+  sequence_length: 14
+  transcription_factors:
+    - AbdA
+    - AbdB
+    - Antp
+    - Dfd
+    - Lab
+    - Pb
+    - Scr
+    - Ubx
+
+split_policy:
+  identifier: global_rc_affinity_stratified_80_10_10.v1
+  seed: 31001
+  split_order:
+    - training
+    - validation
+    - test
+  proportions:
+    training: 0.8
+    validation: 0.1
+    test: 0.1
+  affinity_bin_count: 10
+  minimum_distinct_groups_per_bin: 7
+  equal_distance_bin_merge: lower
+  quota_method: deterministic_largest_remainder
+  group_order: seeded_sha256
+  assignment_objective: lexicographic_stratum_deficit_then_approved_margin_signature_exchange
+
+subset_policy:
+  seed: 32001
+  absolute_counts:
+    - 128
+    - 256
+    - 512
+  fractional_levels:
+    - 0.01
+    - 0.02
+    - 0.05
+    - 0.10
+    - 0.25
+    - 0.50
+    - 1.00
+  absolute_alias_tolerance: 0.05
+  fractional_rounding: round_half_up
+  minimum_primary_count: 128
+  downstream_initialization_seeds:
+    - 33001
+    - 33002
+    - 33003
+    - 33004
+    - 33005
+
+outputs:
+  split_directory: data/processed/exd_hox_primary_split_v1
+  subset_directory: data/processed/exd_hox_nested_subsets_v1
+  sealed_target_directory: data/sealed/exd_hox_primary_test_targets_v1
+  plot_directory: plots/exd_hox_primary_split_v1
+  test_access_policy_path: configs/exd_hox_test_access_policy_v1.yaml
+
+test_access:
+  policy_manifest_hash: 4525194dedb669b6c497fccaa0d0267d3460262e5a3b9bd9e03126a6e260048d
+  policy_file_sha256: 561e20c29923dfaf99d10ae091f7e6519032875d4dbb1078b5f7c3ac88a5abb1
+
+expected:
+  source_occurrences: 461572
+  logical_examples: 461481
+  collapsed_duplicate_occurrences: 91
+  collapsed_duplicate_occurrences_by_tf:
+    AbdA: 2
+    AbdB: 0
+    Antp: 0
+    Dfd: 0
+    Lab: 0
+    Pb: 85
+    Scr: 0
+    Ubx: 4
+  global_rc_groups: 325473
+  groups_shared_across_at_least_two_tfs: 57409
+  global_rc_group_degree_distribution:
+    1: 268064
+    2: 25798
+    3: 10692
+    4: 6613
+    5: 8224
+    6: 2457
+    7: 1569
+    8: 2056
+  global_rc_group_counts:
+    training: 260379
+    validation: 32547
+    test: 32547
+  per_tf_logical_example_counts:
+    AbdA: 25063
+    AbdB: 41463
+    Antp: 30767
+    Dfd: 26642
+    Lab: 32559
+    Pb: 228028
+    Scr: 34488
+    Ubx: 42471
+  per_tf_split_counts:
+    AbdA:
+      training: 20050
+      validation: 2510
+      test: 2503
+    AbdB:
+      training: 33170
+      validation: 4149
+      test: 4144
+    Antp:
+      training: 24610
+      validation: 3080
+      test: 3077
+    Dfd:
+      training: 21311
+      validation: 2670
+      test: 2661
+    Lab:
+      training: 26049
+      validation: 3260
+      test: 3250
+    Pb:
+      training: 182428
+      validation: 22794
+      test: 22806
+    Scr:
+      training: 27588
+      validation: 3450
+      test: 3450
+    Ubx:
+      training: 33971
+      validation: 4250
+      test: 4250

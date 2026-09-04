@@ -1,5 +1,6 @@
 """Tests for deterministic downstream artifact fingerprints."""
 
+import gzip
 import json
 from pathlib import Path
 import tempfile
@@ -15,6 +16,7 @@ from src.downstream_fingerprints import (
     validate_repository_relative_path,
     write_json_exclusive,
     write_tsv_exclusive,
+    write_tsv_gzip_exclusive,
 )
 
 
@@ -93,6 +95,26 @@ class DownstreamFingerprintTests(unittest.TestCase):
                 ("name", "count"),
                 ({"name": "A", "count": 1},),
             )
+
+    def test_gzip_tsv_bytes_are_deterministic_and_exclusive(self) -> None:
+        first_path = self.root / "first" / "one.tsv.gz"
+        second_path = self.root / "second" / "different-name.tsv.gz"
+        fields = ("name", "count")
+        rows = ({"name": "A", "count": 1}, {"name": "B", "count": 2})
+
+        write_tsv_gzip_exclusive(first_path, fields, rows)
+        write_tsv_gzip_exclusive(second_path, fields, rows)
+
+        first_bytes = first_path.read_bytes()
+        self.assertEqual(first_bytes, second_path.read_bytes())
+        self.assertEqual(first_bytes[3] & 0x08, 0)
+        self.assertEqual(first_bytes[4:8], b"\x00\x00\x00\x00")
+        self.assertEqual(
+            gzip.decompress(first_bytes),
+            b"name\tcount\nA\t1\nB\t2\n",
+        )
+        with self.assertRaises(FileExistsError):
+            write_tsv_gzip_exclusive(first_path, fields, rows)
 
 
 if __name__ == "__main__":

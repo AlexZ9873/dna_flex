@@ -85,3 +85,5 @@ data/generated/hg38_pretraining_split_v1/
 
 # Milestone 3C pinned Wang et al. canonical Exd-Hox HDF5 import
 /data/raw/exd_hox_selex_canonical_v1/
+
+/data/sealed/exd_hox_primary_test_targets_v1/

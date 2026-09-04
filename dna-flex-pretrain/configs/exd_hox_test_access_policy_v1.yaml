@@ -1,0 +1,22 @@
+schema_version: exd_hox_test_access_policy.v1
+policy_name: exd_hox_primary_test_access.v1
+authorized_operation: final_primary_test_evaluation
+sealed_target_directory: data/sealed/exd_hox_primary_test_targets_v1
+sealed_target_filename_suffix: .tsv.gz
+sealed_target_manifest_filename: exd_hox_sealed_test_target_manifest_v1.json
+sealed_target_manifest_directory: data/processed/exd_hox_primary_split_v1
+access_record_directory: results/exd_hox_test_access_records_v1
+authorization_max_validity_seconds: 86400
+required_identity_fields:
+  - split_manifest_hash
+  - split_identity_hash
+  - subset_set_manifest_hash
+  - config_hash
+  - model_hash
+  - checkpoint_hash
+sealed_target_fields:
+  - logical_example_id
+  - target_value_float32
+  - target_bits_big_endian_hex
+  - target_commitment_sha256
+manifest_hash: 4525194dedb669b6c497fccaa0d0267d3460262e5a3b9bd9e03126a6e260048d

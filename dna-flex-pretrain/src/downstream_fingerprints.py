@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
+import gzip
 import hashlib
+import io
 import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, Mapping, Sequence
@@ -162,3 +164,37 @@ def write_tsv_exclusive(
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
+
+
+def write_tsv_gzip_exclusive(
+    path: Path | str,
+    fieldnames: Sequence[str],
+    rows: Iterable[Mapping[str, Any]],
+) -> None:
+    """Write deterministic gzip-compressed TSV and refuse overwrite."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "xb") as compressed_file:
+        with gzip.GzipFile(
+            filename="",
+            mode="wb",
+            compresslevel=9,
+            fileobj=compressed_file,
+            mtime=0,
+        ) as gzip_file:
+            with io.TextIOWrapper(
+                gzip_file,
+                encoding="utf-8",
+                newline="",
+            ) as output_file:
+                writer = csv.DictWriter(
+                    output_file,
+                    fieldnames=fieldnames,
+                    delimiter="\t",
+                    lineterminator="\n",
+                    extrasaction="raise",
+                )
+                writer.writeheader()
+                for row in rows:
+                    writer.writerow(row)
