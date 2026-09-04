@@ -1,18 +1,33 @@
-"""Plot finalized Exd-Hox primary split and subset tables only.
+"""Plot and validate finalized-table-only Exd-Hox primary-split figures.
 
-Run with ``python -m scripts.plot.plot_exd_hox_primary_split``.
+Generation requires the exact clean commit that contains the plot generator::
+
+    python -m scripts.plot.plot_exd_hox_primary_split \
+        --expected-plot-generator-commit <full-commit>
+
+Historical v2 outputs can be validated from a later checkout without checking
+out their producer commit::
+
+    python -m scripts.plot.plot_exd_hox_primary_split \
+        --validate-manifest \
+        plots/exd_hox_primary_split_v2/exd_hox_primary_split_plot_manifest_v2.json \
+        --expected-plot-generator-commit <historical-full-commit>
+
 The plotter deliberately has no HDF5, split-generation, or sealed-target
-dependency.  Test affinities are represented only by aggregate test counts.
+dependency. Test affinities are represented only by aggregate test counts.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import os
 from pathlib import Path
+import re
+import subprocess
 import tempfile
 from typing import Any, Dict, Mapping, Sequence, Tuple
 
@@ -44,10 +59,70 @@ from src.downstream_fingerprints import (
 )
 
 
-CONFIG_SCHEMA_VERSION = "exd_hox_primary_split_config.v1"
+PLOT_CONFIG_SCHEMA_VERSION = "exd_hox_primary_split_plot_config.v2"
+PRIMARY_CONFIG_SCHEMA_VERSION = "exd_hox_primary_split_config.v1"
 SPLIT_MANIFEST_SCHEMA_VERSION = "exd_hox_primary_split_manifest.v1"
 SUBSET_MANIFEST_SCHEMA_VERSION = "exd_hox_subset_set_manifest.v1"
-PLOT_MANIFEST_SCHEMA_VERSION = "exd_hox_primary_split_plot_manifest.v1"
+PLOT_MANIFEST_SCHEMA_VERSION = "exd_hox_primary_split_plot_manifest.v2"
+
+PLOT_CONFIG_LOGICAL_PATH = "configs/exd_hox_primary_split_plot_v2.yaml"
+PLOTTING_ENTRY_POINT = "scripts/plot/plot_exd_hox_primary_split.py"
+PRIMARY_CONFIG_LOGICAL_PATH = "configs/exd_hox_primary_split_v1.yaml"
+EXTERNAL_SOURCE_COMMIT = "9e6d6ef0355558c98855b83a9c21fe11999f65d9"
+SOURCE_FOUNDATION_COMMIT = "62a99688cbd3af97f081df500223ba6f55cd0fe0"
+SPLIT_PIPELINE_COMMIT = "65c6bddc0f4570e7a6cf5a90f5f6ef5801e01d27"
+PLOT_LOGICAL_DIRECTORY = "plots/exd_hox_primary_split_v2"
+
+RAW_FILE_SHA256 = {
+    "data/raw/exd_hox_selex_canonical_v1/AbdA/AbdA_test.h5": (
+        "b8d1ed87591725de6eb8892c9d033eb4d21c57ec78083cf06890d20a22d5e0d3"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/AbdA/AbdA_train.h5": (
+        "8941ac376a9af4da31aa439ea224c74b012199808e65c8101ce10e0d92f965b6"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/AbdB/AbdB_test.h5": (
+        "42d48167c4784daa2758c9274bb0816ea21b0b7c70b3b0e450372b1003854a0c"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/AbdB/AbdB_train.h5": (
+        "601ec9f1ab802ea56ddf9b03017172fd049fcfa95c794bf4e3b656fd825aff7a"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Antp/Antp_test.h5": (
+        "a27eec70d02304f95d333718ac82e96d220bb3da6295beb680eb582e189e88c0"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Antp/Antp_train.h5": (
+        "bf8ac08213c302ffc0e9c4357a90d9470abe5842ffd00f984a5dfbb763c249ae"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Dfd/Dfd_test.h5": (
+        "ab25a4de43974515cf1b3ac45aeff8d3c38792cb4d1101324068fefaa99afcdb"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Dfd/Dfd_train.h5": (
+        "30f7130ff3f7822acd91e77337885b31e69bd96106daf790539af23031ac60f8"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Lab/Lab_test.h5": (
+        "f7877379397316d56e2406774afb8ad144f92ce272b57f61765b721d19ec814a"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Lab/Lab_train.h5": (
+        "231fa9475b575c046aa69a239a39f13d1669edc69f61c0714f3625cb5436c3d6"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Pb/Pb_test.h5": (
+        "7b639e6f970d1c5d9953d45a597e4f792161486ab3986c7af4c44e86235b46ce"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Pb/Pb_train.h5": (
+        "13943e14e52f1b4573cb595a500049d77b736315fb21321d949b8bb557a172d8"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Scr/Scr_test.h5": (
+        "fbd63bba7472bdf3ee655057a6c4b8c077813705952b4b13f77afdb691c10934"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Scr/Scr_train.h5": (
+        "ba67be0d76de57cb735e41ffe2367229b3dfc14263d588368330494143b7c2cc"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Ubx/Ubx_test.h5": (
+        "f676f7c5c0675011190ecafd0e7d7557dcf957a5791a97aa830531a44fc88826"
+    ),
+    "data/raw/exd_hox_selex_canonical_v1/Ubx/Ubx_train.h5": (
+        "00ae0186ac0aabb393f77c3101b5c011d8b9b2b2e54b018417327071a6241dfb"
+    ),
+}
 
 COUNT_INPUT_FILENAME = "exd_hox_primary_split_count_summary_v1.tsv"
 AFFINITY_INPUT_FILENAME = "exd_hox_primary_split_affinity_histogram_v1.tsv"
@@ -56,18 +131,72 @@ SUBSET_INPUT_FILENAME = "exd_hox_nested_subset_levels_v1.tsv"
 SPLIT_MANIFEST_FILENAME = "exd_hox_primary_split_manifest_v1.json"
 SUBSET_MANIFEST_FILENAME = "exd_hox_subset_set_manifest_v1.json"
 
-COUNT_SOURCE_FILENAME = "exd_hox_primary_split_counts_plot_source_v1.tsv"
-AFFINITY_SOURCE_FILENAME = "exd_hox_primary_split_affinity_plot_source_v1.tsv"
-SUBSET_SOURCE_FILENAME = "exd_hox_nested_subset_counts_plot_source_v1.tsv"
-LEAKAGE_SOURCE_FILENAME = "exd_hox_primary_split_leakage_plot_source_v1.tsv"
-COMPARISON_SOURCE_FILENAME = "exd_hox_paper_vs_primary_split_plot_source_v1.tsv"
-PLOT_MANIFEST_FILENAME = "exd_hox_primary_split_plot_manifest_v1.json"
+COUNT_SOURCE_FILENAME = "exd_hox_primary_split_counts_plot_source_v2.tsv"
+AFFINITY_SOURCE_FILENAME = "exd_hox_primary_split_affinity_plot_source_v2.tsv"
+SUBSET_SOURCE_FILENAME = "exd_hox_nested_subset_counts_plot_source_v2.tsv"
+LEAKAGE_SOURCE_FILENAME = "exd_hox_primary_split_leakage_plot_source_v2.tsv"
+COMPARISON_SOURCE_FILENAME = "exd_hox_paper_vs_primary_split_plot_source_v2.tsv"
+PLOT_MANIFEST_FILENAME = "exd_hox_primary_split_plot_manifest_v2.json"
 
-COUNT_PLOT_STEM = "exd_hox_primary_split_counts_v1"
-AFFINITY_PLOT_STEM = "exd_hox_primary_split_affinity_distributions_v1"
-SUBSET_PLOT_STEM = "exd_hox_nested_subset_counts_v1"
-LEAKAGE_PLOT_STEM = "exd_hox_primary_split_leakage_v1"
-COMPARISON_PLOT_STEM = "exd_hox_paper_vs_primary_split_counts_v1"
+COUNT_PLOT_STEM = "exd_hox_primary_split_counts_v2"
+AFFINITY_PLOT_STEM = "exd_hox_primary_split_affinity_distributions_v2"
+SUBSET_PLOT_STEM = "exd_hox_nested_subset_counts_v2"
+LEAKAGE_PLOT_STEM = "exd_hox_primary_split_leakage_v2"
+COMPARISON_PLOT_STEM = "exd_hox_paper_vs_primary_split_counts_v2"
+
+OUTPUT_FILENAMES = (
+    COUNT_SOURCE_FILENAME,
+    AFFINITY_SOURCE_FILENAME,
+    SUBSET_SOURCE_FILENAME,
+    LEAKAGE_SOURCE_FILENAME,
+    COMPARISON_SOURCE_FILENAME,
+    "{0}.png".format(COUNT_PLOT_STEM),
+    "{0}.pdf".format(COUNT_PLOT_STEM),
+    "{0}.png".format(AFFINITY_PLOT_STEM),
+    "{0}.pdf".format(AFFINITY_PLOT_STEM),
+    "{0}.png".format(SUBSET_PLOT_STEM),
+    "{0}.pdf".format(SUBSET_PLOT_STEM),
+    "{0}.png".format(LEAKAGE_PLOT_STEM),
+    "{0}.pdf".format(LEAKAGE_PLOT_STEM),
+    "{0}.png".format(COMPARISON_PLOT_STEM),
+    "{0}.pdf".format(COMPARISON_PLOT_STEM),
+)
+
+PLOT_MANIFEST_FIELDS = frozenset(
+    (
+        "schema_version",
+        "study_identifier",
+        "dataset_identifier",
+        "external_source_commit",
+        "source_foundation_commit",
+        "split_pipeline_commit",
+        "plot_generator_commit",
+        "plot_generator_tracked_worktree_clean",
+        "plotting_entry_point_path",
+        "plotting_entry_point_byte_size",
+        "plotting_entry_point_sha256",
+        "plot_config_path",
+        "plot_config_sha256",
+        "primary_split_config_path",
+        "primary_split_config_sha256",
+        "primary_split_id",
+        "primary_split_manifest_path",
+        "primary_split_manifest_hash",
+        "primary_split_manifest_file_sha256",
+        "subset_set_id",
+        "subset_set_manifest_path",
+        "subset_set_manifest_hash",
+        "subset_set_manifest_file_sha256",
+        "plot_directory",
+        "inputs",
+        "outputs",
+        "test_target_policy",
+        "manifest_hash",
+    )
+)
+
+COMMIT_PATTERN = re.compile(r"[0-9a-f]{40}")
+SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 
 COUNT_INPUT_FIELDS = (
     "protocol",
@@ -150,96 +279,106 @@ def parse_arguments(argv=None):
     """Parse command-line arguments."""
 
     parser = argparse.ArgumentParser(
-        description="Plot finalized Exd-Hox primary split and subset tables."
+        description=(
+            "Generate or validate v2 Exd-Hox plots with commit-bound "
+            "code provenance."
+        )
     )
     parser.add_argument(
         "--config",
-        default="configs/exd_hox_primary_split_v1.yaml",
+        default=PLOT_CONFIG_LOGICAL_PATH,
     )
     parser.add_argument("--repository-root", default=".")
+    parser.add_argument(
+        "--expected-plot-generator-commit",
+        required=True,
+        help="Full commit expected to contain the plot generator.",
+    )
+    parser.add_argument(
+        "--validate-manifest",
+        metavar="PATH",
+        help=(
+            "Validate an existing v2 plot manifest and its historical "
+            "producer blob instead of generating plots."
+        ),
+    )
     return parser.parse_args(argv)
 
 
 def plot_primary_split_tables(
     config_path: Path | str,
     repository_root: Path | str,
+    expected_plot_generator_commit: str,
 ) -> Dict[str, Any]:
-    """Create five immutable plot families from finalized public tables."""
+    """Create five immutable v2 plot families from finalized public tables."""
 
-    root = Path(repository_root).resolve()
-    config_candidate = Path(config_path)
-    if not config_candidate.is_absolute():
-        config_candidate = root / config_candidate
-    config_file = config_candidate.resolve()
+    root = Path(os.path.abspath(repository_root))
+    config_file = _resolve_repository_file(root, config_path)
     config_logical_path = repository_relative_path(config_file, root)
+    if config_logical_path != PLOT_CONFIG_LOGICAL_PATH:
+        raise ValueError("The v2 plot config must use its canonical path.")
     _reject_protected_input_path(config_logical_path)
     if config_file.is_symlink() or not config_file.is_file():
         raise FileNotFoundError("Plot config must be a regular public file.")
     config = _load_plot_config(config_file)
-
-    split_directory = _resolve_input_directory(
-        root,
-        str(config["outputs"]["split_directory"]),
-    )
-    subset_directory = _resolve_input_directory(
-        root,
-        str(config["outputs"]["subset_directory"]),
-    )
+    bindings = _load_bound_plot_inputs(config, config_file, root)
     plot_logical_directory = str(config["outputs"]["plot_directory"])
     plot_directory = _resolve_repository_path(root, plot_logical_directory)
-    _require_finalized_directory(split_directory, "split")
-    _require_finalized_directory(subset_directory, "subset")
     _require_new_plot_directory(plot_directory)
 
-    count_path = split_directory / COUNT_INPUT_FILENAME
-    affinity_path = split_directory / AFFINITY_INPUT_FILENAME
-    leakage_path = split_directory / LEAKAGE_INPUT_FILENAME
-    subset_path = subset_directory / SUBSET_INPUT_FILENAME
-    split_manifest_path = split_directory / SPLIT_MANIFEST_FILENAME
-    subset_manifest_path = subset_directory / SUBSET_MANIFEST_FILENAME
-    for input_path in (
-        count_path,
-        affinity_path,
-        leakage_path,
-        subset_path,
-        split_manifest_path,
-        subset_manifest_path,
-    ):
-        _require_public_regular_file(input_path, root)
-
-    split_manifest = _load_hashed_manifest(
-        split_manifest_path,
-        SPLIT_MANIFEST_SCHEMA_VERSION,
+    runtime_head = _verify_generation_git_binding(
+        repository_root=root,
+        config=config,
+        expected_plot_generator_commit=expected_plot_generator_commit,
     )
-    subset_manifest = _load_hashed_manifest(
-        subset_manifest_path,
-        SUBSET_MANIFEST_SCHEMA_VERSION,
+    entry_point_path = _resolve_repository_path(root, PLOTTING_ENTRY_POINT)
+    entry_point_fingerprint = _verify_tracked_entry_point(
+        repository_root=root,
+        runtime_head=runtime_head,
+        entry_point_path=entry_point_path,
     )
-    if subset_manifest.get("split_manifest_hash") != split_manifest["manifest_hash"]:
-        raise ValueError("Subset manifest does not bind the split manifest identity.")
-
-    split_inputs = (count_path, affinity_path, leakage_path)
-    subset_inputs = (subset_path,)
-    for input_path in split_inputs:
-        _validate_manifest_artifact(split_manifest, input_path, root)
-    for input_path in subset_inputs:
-        _validate_manifest_artifact(subset_manifest, input_path, root)
-
-    input_paths = (
-        count_path,
-        affinity_path,
-        leakage_path,
-        subset_path,
-        split_manifest_path,
-        subset_manifest_path,
+    snapshot_paths = (
+        entry_point_path,
+        config_file,
+        bindings["primary_config_path"],
+        *bindings["input_paths"],
     )
-    initial_input_fingerprints = _fingerprint_paths(input_paths, root)
+    initial_snapshots = _fingerprint_paths(snapshot_paths, root)
+    _recheck_generation_state(
+        repository_root=root,
+        runtime_head=runtime_head,
+        snapshot_paths=snapshot_paths,
+        initial_snapshots=initial_snapshots,
+    )
+    revalidated_config = _load_plot_config(config_file)
+    if revalidated_config != config:
+        raise ValueError("Plot config changed before generation snapshot validation.")
+    revalidated_bindings = _load_bound_plot_inputs(
+        revalidated_config,
+        config_file,
+        root,
+    )
+    if tuple(revalidated_bindings["input_paths"]) != tuple(bindings["input_paths"]):
+        raise ValueError("Public plot input bindings changed before generation.")
+    bindings = revalidated_bindings
+    _recheck_generation_state(
+        repository_root=root,
+        runtime_head=runtime_head,
+        snapshot_paths=snapshot_paths,
+        initial_snapshots=initial_snapshots,
+    )
+    initial_input_fingerprints = _fingerprint_paths(
+        bindings["input_paths"],
+        root,
+    )
 
-    count_rows = _read_tsv(count_path, COUNT_INPUT_FIELDS)
-    affinity_rows = _read_tsv(affinity_path, AFFINITY_INPUT_FIELDS)
-    leakage_rows = _read_tsv(leakage_path, LEAKAGE_INPUT_FIELDS)
-    subset_rows = _read_tsv(subset_path, SUBSET_INPUT_FIELDS)
-    transcription_factors = tuple(config["dataset"]["transcription_factors"])
+    count_rows = _read_tsv(bindings["count_path"], COUNT_INPUT_FIELDS)
+    affinity_rows = _read_tsv(bindings["affinity_path"], AFFINITY_INPUT_FIELDS)
+    leakage_rows = _read_tsv(bindings["leakage_path"], LEAKAGE_INPUT_FIELDS)
+    subset_rows = _read_tsv(bindings["subset_path"], SUBSET_INPUT_FIELDS)
+    transcription_factors = tuple(
+        bindings["primary_config"]["dataset"]["transcription_factors"]
+    )
 
     _validate_count_rows(transcription_factors, count_rows)
     _validate_affinity_rows(transcription_factors, affinity_rows)
@@ -311,9 +450,6 @@ def plot_primary_split_tables(
             comparison_source_rows,
         )
 
-        current_input_fingerprints = _fingerprint_paths(input_paths, root)
-        if current_input_fingerprints != initial_input_fingerprints:
-            raise ValueError("Finalized plot input changed while plotting.")
         manifest = _write_plot_manifest(
             config=config,
             config_file=config_file,
@@ -321,8 +457,15 @@ def plot_primary_split_tables(
             plot_logical_directory=plot_logical_directory,
             staging_directory=staging_directory,
             input_fingerprints=initial_input_fingerprints,
-            split_manifest=split_manifest,
-            subset_manifest=subset_manifest,
+            bindings=bindings,
+            runtime_head=runtime_head,
+            entry_point_fingerprint=entry_point_fingerprint,
+        )
+        _recheck_generation_state(
+            repository_root=root,
+            runtime_head=runtime_head,
+            snapshot_paths=snapshot_paths,
+            initial_snapshots=initial_snapshots,
         )
         _require_new_plot_directory(plot_directory)
         os.rename(staging_directory, plot_directory)
@@ -336,18 +479,140 @@ def _load_plot_config(path: Path) -> Dict[str, Any]:
         payload = yaml.safe_load(input_file)
     if not isinstance(payload, Mapping):
         raise ValueError("Primary split plot config must be a mapping.")
-    if payload.get("schema_version") != CONFIG_SCHEMA_VERSION:
-        raise ValueError("Unsupported Exd-Hox primary split config schema.")
+    if payload.get("schema_version") != PLOT_CONFIG_SCHEMA_VERSION:
+        raise ValueError("Unsupported Exd-Hox primary split plot config schema.")
+    _require_exact_fields(
+        payload,
+        ("schema_version", "study", "provenance", "inputs", "outputs"),
+        "Plot config",
+    )
+    study = payload.get("study")
+    provenance = payload.get("provenance")
+    inputs = payload.get("inputs")
     outputs = payload.get("outputs")
-    dataset = payload.get("dataset")
+    if not isinstance(study, Mapping):
+        raise ValueError("Plot config study must be a mapping.")
+    if not isinstance(provenance, Mapping):
+        raise ValueError("Plot config provenance must be a mapping.")
+    if not isinstance(inputs, Mapping):
+        raise ValueError("Plot config inputs must be a mapping.")
     if not isinstance(outputs, Mapping):
-        raise ValueError("Primary split config outputs must be a mapping.")
+        raise ValueError("Plot config outputs must be a mapping.")
+
+    _require_exact_fields(
+        study,
+        ("identifier", "dataset_identifier"),
+        "Plot config study",
+    )
+    _require_nonempty_string(study.get("identifier"), "Study identifier")
+    _require_nonempty_string(
+        study.get("dataset_identifier"),
+        "Dataset identifier",
+    )
+
+    _require_exact_fields(
+        provenance,
+        (
+            "external_source_commit",
+            "source_foundation_commit",
+            "split_pipeline_commit",
+            "plotting_entry_point",
+        ),
+        "Plot config provenance",
+    )
+    for field in (
+        "external_source_commit",
+        "source_foundation_commit",
+        "split_pipeline_commit",
+    ):
+        _require_full_commit(provenance.get(field), field)
+    if provenance.get("external_source_commit") != EXTERNAL_SOURCE_COMMIT:
+        raise ValueError("Plot config external source commit differs.")
+    if provenance.get("source_foundation_commit") != SOURCE_FOUNDATION_COMMIT:
+        raise ValueError("Plot config source-foundation commit differs.")
+    if provenance.get("split_pipeline_commit") != SPLIT_PIPELINE_COMMIT:
+        raise ValueError("Plot config split-pipeline commit differs.")
+    if provenance.get("plotting_entry_point") != PLOTTING_ENTRY_POINT:
+        raise ValueError("Plot config plotting entry point differs.")
+
+    required_input_fields = (
+        "primary_split_config_path",
+        "primary_split_config_sha256",
+        "primary_split_id",
+        "primary_split_manifest_path",
+        "primary_split_manifest_hash",
+        "primary_split_manifest_file_sha256",
+        "subset_set_id",
+        "subset_set_manifest_path",
+        "subset_set_manifest_hash",
+        "subset_set_manifest_file_sha256",
+        "count_summary_path",
+        "affinity_histogram_path",
+        "leakage_audit_path",
+        "subset_levels_path",
+        "raw_file_sha256",
+    )
+    _require_exact_fields(inputs, required_input_fields, "Plot config inputs")
+    path_fields = (
+        "primary_split_config_path",
+        "primary_split_manifest_path",
+        "subset_set_manifest_path",
+        "count_summary_path",
+        "affinity_histogram_path",
+        "leakage_audit_path",
+        "subset_levels_path",
+    )
+    for field in path_fields:
+        validate_repository_relative_path(str(inputs[field]))
+    if inputs["primary_split_config_path"] != PRIMARY_CONFIG_LOGICAL_PATH:
+        raise ValueError("Plot config primary split config path differs.")
+    for field in (
+        "primary_split_config_sha256",
+        "primary_split_id",
+        "primary_split_manifest_hash",
+        "primary_split_manifest_file_sha256",
+        "subset_set_manifest_hash",
+        "subset_set_manifest_file_sha256",
+    ):
+        _require_sha256(inputs.get(field), field)
+    _require_nonempty_string(inputs.get("subset_set_id"), "Subset-set ID")
+    raw_file_sha256 = inputs.get("raw_file_sha256")
+    if not isinstance(raw_file_sha256, Mapping) or not raw_file_sha256:
+        raise ValueError("Plot config raw-file SHA-256 identities must be a mapping.")
+    for raw_path, raw_sha256 in raw_file_sha256.items():
+        normalized_raw_path = validate_repository_relative_path(str(raw_path))
+        if Path(normalized_raw_path).suffix.lower() not in (".h5", ".hdf5"):
+            raise ValueError("Raw-file identity path must identify an HDF5 file.")
+        _require_sha256(raw_sha256, "Raw-file SHA-256")
+    normalized_raw_identities = {}
+    for raw_path, raw_sha256 in raw_file_sha256.items():
+        normalized_raw_identities[str(raw_path)] = str(raw_sha256)
+    if normalized_raw_identities != RAW_FILE_SHA256:
+        raise ValueError("Plot config raw-file SHA-256 identities differ.")
+
+    _require_exact_fields(outputs, ("plot_directory",), "Plot config outputs")
+    validate_repository_relative_path(str(outputs["plot_directory"]))
+    if outputs["plot_directory"] != PLOT_LOGICAL_DIRECTORY:
+        raise ValueError("Plot config output directory differs from v2.")
+    return dict(payload)
+
+
+def _load_primary_split_config(path: Path) -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as input_file:
+        payload = yaml.safe_load(input_file)
+    if not isinstance(payload, Mapping):
+        raise ValueError("Primary split config must be a mapping.")
+    if payload.get("schema_version") != PRIMARY_CONFIG_SCHEMA_VERSION:
+        raise ValueError("Unsupported Exd-Hox primary split config schema.")
+    study = payload.get("study")
+    dataset = payload.get("dataset")
+    outputs = payload.get("outputs")
+    if not isinstance(study, Mapping):
+        raise ValueError("Primary split config study must be a mapping.")
     if not isinstance(dataset, Mapping):
         raise ValueError("Primary split config dataset must be a mapping.")
-    for key in ("split_directory", "subset_directory", "plot_directory"):
-        if key not in outputs:
-            raise ValueError("Missing config outputs.{0}.".format(key))
-        validate_repository_relative_path(str(outputs[key]))
+    if not isinstance(outputs, Mapping):
+        raise ValueError("Primary split config outputs must be a mapping.")
     transcription_factors = dataset.get("transcription_factors")
     if not isinstance(transcription_factors, Sequence) or isinstance(
         transcription_factors,
@@ -357,21 +622,430 @@ def _load_plot_config(path: Path) -> Dict[str, Any]:
     normalized_tfs = tuple(str(value) for value in transcription_factors)
     if not normalized_tfs or len(set(normalized_tfs)) != len(normalized_tfs):
         raise ValueError("Dataset transcription factors must be nonempty and unique.")
-    study = payload.get("study")
-    if not isinstance(study, Mapping):
-        raise ValueError("Primary split config study must be a mapping.")
-    if not study.get("dataset_identifier"):
-        raise ValueError("Study dataset identifier must not be empty.")
+    for field in ("identifier", "dataset_identifier", "project_commit"):
+        _require_nonempty_string(study.get(field), "Primary study {0}".format(field))
+    _require_full_commit(study.get("project_commit"), "project_commit")
+    _require_full_commit(
+        study.get("external_source_commit"),
+        "external_source_commit",
+    )
+    for field in ("split_directory", "subset_directory"):
+        if field not in outputs:
+            raise ValueError("Primary split config outputs.{0} is missing.".format(field))
+        validate_repository_relative_path(str(outputs[field]))
     return dict(payload)
 
 
-def _resolve_input_directory(repository_root: Path, relative_path: str) -> Path:
-    normalized = validate_repository_relative_path(relative_path)
-    _reject_protected_input_path(normalized)
-    resolved = _resolve_repository_path(repository_root, normalized)
-    resolved_logical_path = repository_relative_path(resolved, repository_root)
-    _reject_protected_input_path(resolved_logical_path)
-    return resolved
+def _load_bound_plot_inputs(
+    config: Mapping[str, Any],
+    config_file: Path,
+    repository_root: Path,
+) -> Dict[str, Any]:
+    inputs = config["inputs"]
+    provenance = config["provenance"]
+    primary_config_path = _resolve_repository_path(
+        repository_root,
+        str(inputs["primary_split_config_path"]),
+    )
+    _require_public_regular_file(primary_config_path, repository_root)
+    primary_config_sha256 = hash_file_bytes(primary_config_path)
+    if primary_config_sha256 != inputs["primary_split_config_sha256"]:
+        raise ValueError("Primary split config fingerprint mismatch.")
+    primary_config = _load_primary_split_config(primary_config_path)
+    if primary_config["study"]["identifier"] != config["study"]["identifier"]:
+        raise ValueError("Primary split study identifier differs from plot config.")
+    if (
+        primary_config["study"]["dataset_identifier"]
+        != config["study"]["dataset_identifier"]
+    ):
+        raise ValueError("Primary split dataset identifier differs from plot config.")
+    if (
+        primary_config["study"]["external_source_commit"]
+        != provenance["external_source_commit"]
+    ):
+        raise ValueError("Primary split external source commit differs.")
+    if (
+        primary_config["study"]["project_commit"]
+        != provenance["source_foundation_commit"]
+    ):
+        raise ValueError("Primary split source-foundation commit differs.")
+
+    split_manifest_path = _resolve_repository_path(
+        repository_root,
+        str(inputs["primary_split_manifest_path"]),
+    )
+    subset_manifest_path = _resolve_repository_path(
+        repository_root,
+        str(inputs["subset_set_manifest_path"]),
+    )
+    _require_public_regular_file(split_manifest_path, repository_root)
+    _require_public_regular_file(subset_manifest_path, repository_root)
+    split_manifest = _load_hashed_manifest(
+        split_manifest_path,
+        SPLIT_MANIFEST_SCHEMA_VERSION,
+    )
+    subset_manifest = _load_hashed_manifest(
+        subset_manifest_path,
+        SUBSET_MANIFEST_SCHEMA_VERSION,
+    )
+
+    if hash_file_bytes(split_manifest_path) != inputs[
+        "primary_split_manifest_file_sha256"
+    ]:
+        raise ValueError("Primary split manifest file fingerprint mismatch.")
+    if hash_file_bytes(subset_manifest_path) != inputs[
+        "subset_set_manifest_file_sha256"
+    ]:
+        raise ValueError("Subset-set manifest file fingerprint mismatch.")
+    if split_manifest["manifest_hash"] != inputs["primary_split_manifest_hash"]:
+        raise ValueError("Primary split manifest identity differs from plot config.")
+    if subset_manifest["manifest_hash"] != inputs["subset_set_manifest_hash"]:
+        raise ValueError("Subset-set manifest identity differs from plot config.")
+    if split_manifest.get("split_identity_hash") != inputs["primary_split_id"]:
+        raise ValueError("Primary split identity differs from plot config.")
+    if subset_manifest["manifest_hash"] != inputs["subset_set_id"]:
+        raise ValueError("Subset-set identity differs from plot config.")
+    if subset_manifest.get("split_manifest_hash") != split_manifest["manifest_hash"]:
+        raise ValueError("Subset manifest does not bind the split manifest identity.")
+    if subset_manifest.get("split_identity_hash") != split_manifest.get(
+        "split_identity_hash"
+    ):
+        raise ValueError("Subset manifest does not bind the primary split identity.")
+
+    for manifest, label in (
+        (split_manifest, "Primary split"),
+        (subset_manifest, "Subset-set"),
+    ):
+        if manifest.get("study_identifier") != config["study"]["identifier"]:
+            raise ValueError("{0} study identifier differs.".format(label))
+        if (
+            manifest.get("dataset_identifier")
+            != config["study"]["dataset_identifier"]
+        ):
+            raise ValueError("{0} dataset identifier differs.".format(label))
+        if manifest.get("config_path") != inputs["primary_split_config_path"]:
+            raise ValueError("{0} primary config path differs.".format(label))
+        if manifest.get("config_sha256") != inputs["primary_split_config_sha256"]:
+            raise ValueError("{0} primary config fingerprint differs.".format(label))
+
+    split_directory = str(split_manifest["split_directory"])
+    subset_directory = str(subset_manifest["subset_directory"])
+    if primary_config["outputs"]["split_directory"] != split_directory:
+        raise ValueError("Primary split directory binding differs.")
+    if primary_config["outputs"]["subset_directory"] != subset_directory:
+        raise ValueError("Subset directory binding differs.")
+    if repository_relative_path(split_manifest_path.parent, repository_root) != split_directory:
+        raise ValueError("Primary split manifest is outside its bound directory.")
+    if repository_relative_path(subset_manifest_path.parent, repository_root) != subset_directory:
+        raise ValueError("Subset-set manifest is outside its bound directory.")
+
+    expected_public_paths = {
+        "count_summary_path": Path(split_directory, COUNT_INPUT_FILENAME).as_posix(),
+        "affinity_histogram_path": Path(
+            split_directory,
+            AFFINITY_INPUT_FILENAME,
+        ).as_posix(),
+        "leakage_audit_path": Path(
+            split_directory,
+            LEAKAGE_INPUT_FILENAME,
+        ).as_posix(),
+        "subset_levels_path": Path(
+            subset_directory,
+            SUBSET_INPUT_FILENAME,
+        ).as_posix(),
+    }
+    for field, expected_path in expected_public_paths.items():
+        if inputs[field] != expected_path:
+            raise ValueError("Configured public plot input path differs: {0}.".format(field))
+
+    count_path = _resolve_repository_path(repository_root, inputs["count_summary_path"])
+    affinity_path = _resolve_repository_path(
+        repository_root,
+        inputs["affinity_histogram_path"],
+    )
+    leakage_path = _resolve_repository_path(
+        repository_root,
+        inputs["leakage_audit_path"],
+    )
+    subset_path = _resolve_repository_path(repository_root, inputs["subset_levels_path"])
+    for public_input_path in (count_path, affinity_path, leakage_path, subset_path):
+        _require_public_regular_file(public_input_path, repository_root)
+    for split_input_path in (count_path, affinity_path, leakage_path):
+        _validate_manifest_artifact(split_manifest, split_input_path, repository_root)
+    _validate_manifest_artifact(subset_manifest, subset_path, repository_root)
+
+    input_paths = (
+        count_path,
+        affinity_path,
+        leakage_path,
+        subset_path,
+        split_manifest_path,
+        subset_manifest_path,
+    )
+    return {
+        "primary_config_path": primary_config_path,
+        "primary_config": primary_config,
+        "primary_config_sha256": primary_config_sha256,
+        "split_manifest_path": split_manifest_path,
+        "split_manifest": split_manifest,
+        "subset_manifest_path": subset_manifest_path,
+        "subset_manifest": subset_manifest,
+        "count_path": count_path,
+        "affinity_path": affinity_path,
+        "leakage_path": leakage_path,
+        "subset_path": subset_path,
+        "input_paths": input_paths,
+        "plot_config_path": config_file,
+    }
+
+
+def _require_exact_fields(
+    payload: Mapping[str, Any],
+    expected_fields: Sequence[str],
+    label: str,
+) -> None:
+    if any(not isinstance(field, str) for field in payload):
+        raise ValueError("{0} field names must be strings.".format(label))
+    observed = set(payload)
+    expected = set(expected_fields)
+    if observed != expected:
+        missing = sorted(expected.difference(observed))
+        extra = sorted(observed.difference(expected))
+        message = "{0} fields differ; missing={1}, extra={2}."
+        raise ValueError(message.format(label, missing, extra))
+
+
+def _require_nonempty_string(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ValueError("{0} must be a nonempty string.".format(label))
+    return value
+
+
+def _require_full_commit(value: Any, label: str) -> str:
+    if not isinstance(value, str) or COMMIT_PATTERN.fullmatch(value) is None:
+        message = "{0} must be a full 40-character lowercase Git commit."
+        raise ValueError(message.format(label))
+    return value
+
+
+def _require_sha256(value: Any, label: str) -> str:
+    if not isinstance(value, str) or SHA256_PATTERN.fullmatch(value) is None:
+        raise ValueError("{0} must be a lowercase SHA-256 digest.".format(label))
+    return value
+
+
+def _resolve_repository_file(
+    repository_root: Path,
+    path: Path | str,
+) -> Path:
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        candidate = repository_root / candidate
+    normalized = Path(os.path.abspath(candidate))
+    try:
+        normalized.relative_to(repository_root)
+    except ValueError as error:
+        raise ValueError("Path is outside the repository root.") from error
+    _reject_symlink_components(normalized, repository_root)
+    return normalized
+
+
+def _run_git(
+    repository_root: Path,
+    arguments: Sequence[str],
+) -> subprocess.CompletedProcess[bytes]:
+    command = ["git", "-C", str(repository_root)]
+    command.extend(arguments)
+    return subprocess.run(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+
+def _git_text(
+    repository_root: Path,
+    arguments: Sequence[str],
+    description: str,
+) -> str:
+    result = _run_git(repository_root, arguments)
+    if result.returncode != 0:
+        raise ValueError("Unable to {0}.".format(description))
+    try:
+        output = result.stdout.decode("ascii").strip()
+    except UnicodeDecodeError as error:
+        raise ValueError("Git returned non-ASCII output for {0}.".format(description)) from error
+    return output
+
+
+def _resolve_runtime_head(repository_root: Path) -> str:
+    runtime_head = _git_text(
+        repository_root,
+        ("rev-parse", "--verify", "HEAD^{commit}"),
+        "resolve runtime Git HEAD",
+    )
+    return _require_full_commit(runtime_head, "Runtime Git HEAD")
+
+
+def _require_clean_tracked_worktree(repository_root: Path) -> None:
+    staged = _run_git(
+        repository_root,
+        ("diff", "--cached", "--quiet", "--no-ext-diff", "--ignore-submodules=none"),
+    )
+    if staged.returncode == 1:
+        raise ValueError("Staged tracked changes are not allowed during generation.")
+    if staged.returncode != 0:
+        raise ValueError("Unable to inspect staged tracked changes.")
+    unstaged = _run_git(
+        repository_root,
+        ("diff", "--quiet", "--no-ext-diff", "--ignore-submodules=none"),
+    )
+    if unstaged.returncode == 1:
+        raise ValueError("Unstaged tracked changes are not allowed during generation.")
+    if unstaged.returncode != 0:
+        raise ValueError("Unable to inspect unstaged tracked changes.")
+
+
+def _require_local_commit(repository_root: Path, commit: str, label: str) -> None:
+    _require_full_commit(commit, label)
+    resolved = _git_text(
+        repository_root,
+        ("rev-parse", "--verify", "{0}^{{commit}}".format(commit)),
+        "resolve {0}".format(label),
+    )
+    if resolved != commit:
+        raise ValueError("{0} does not resolve to its pinned commit.".format(label))
+
+
+def _require_ancestor(
+    repository_root: Path,
+    ancestor: str,
+    descendant: str,
+    label: str,
+) -> None:
+    result = _run_git(
+        repository_root,
+        ("merge-base", "--is-ancestor", ancestor, descendant),
+    )
+    if result.returncode == 1:
+        raise ValueError("Required Git ancestry is absent: {0}.".format(label))
+    if result.returncode != 0:
+        raise ValueError("Unable to verify Git ancestry: {0}.".format(label))
+
+
+def _verify_commit_chain(
+    repository_root: Path,
+    source_foundation_commit: str,
+    split_pipeline_commit: str,
+    plot_generator_commit: str,
+) -> None:
+    for commit, label in (
+        (source_foundation_commit, "source-foundation commit"),
+        (split_pipeline_commit, "split-pipeline commit"),
+        (plot_generator_commit, "plot-generator commit"),
+    ):
+        _require_local_commit(repository_root, commit, label)
+    _require_ancestor(
+        repository_root,
+        source_foundation_commit,
+        split_pipeline_commit,
+        "source foundation -> split pipeline",
+    )
+    _require_ancestor(
+        repository_root,
+        split_pipeline_commit,
+        plot_generator_commit,
+        "split pipeline -> plot generator",
+    )
+
+
+def _verify_generation_git_binding(
+    repository_root: Path,
+    config: Mapping[str, Any],
+    expected_plot_generator_commit: str,
+) -> str:
+    expected_commit = _require_full_commit(
+        expected_plot_generator_commit,
+        "Expected plot-generator commit",
+    )
+    runtime_head = _resolve_runtime_head(repository_root)
+    if runtime_head != expected_commit:
+        raise ValueError("Expected plot-generator commit does not match runtime HEAD.")
+    _require_clean_tracked_worktree(repository_root)
+    provenance = config["provenance"]
+    _verify_commit_chain(
+        repository_root,
+        provenance["source_foundation_commit"],
+        provenance["split_pipeline_commit"],
+        runtime_head,
+    )
+    return runtime_head
+
+
+def _git_tree_path(repository_root: Path, logical_path: str) -> str:
+    git_top_text = _git_text(
+        repository_root,
+        ("rev-parse", "--show-toplevel"),
+        "resolve Git top-level",
+    )
+    git_top = Path(git_top_text).resolve()
+    try:
+        project_prefix = repository_root.resolve().relative_to(git_top)
+    except ValueError as error:
+        raise ValueError("Repository root is outside the Git worktree.") from error
+    candidate = project_prefix / validate_repository_relative_path(logical_path)
+    return candidate.as_posix()
+
+
+def _git_blob_bytes(
+    repository_root: Path,
+    commit: str,
+    logical_path: str,
+) -> bytes:
+    tree_path = _git_tree_path(repository_root, logical_path)
+    object_specification = "{0}:{1}".format(commit, tree_path)
+    result = _run_git(repository_root, ("cat-file", "blob", object_specification))
+    if result.returncode != 0:
+        message = "Plotting entry point is not tracked at the required commit."
+        raise ValueError(message)
+    return result.stdout
+
+
+def _verify_tracked_entry_point(
+    repository_root: Path,
+    runtime_head: str,
+    entry_point_path: Path,
+) -> Dict[str, Any]:
+    _require_public_regular_file(entry_point_path, repository_root)
+    logical_path = repository_relative_path(entry_point_path, repository_root)
+    blob = _git_blob_bytes(repository_root, runtime_head, logical_path)
+    fingerprint = fingerprint_file(entry_point_path, logical_path).to_dict()
+    blob_sha256 = hashlib.sha256(blob).hexdigest()
+    if len(blob) != fingerprint["byte_size"] or blob_sha256 != fingerprint["sha256"]:
+        raise ValueError("Tracked plotting entry-point blob differs from worktree bytes.")
+    return fingerprint
+
+
+def _recheck_generation_state(
+    repository_root: Path,
+    runtime_head: str,
+    snapshot_paths: Sequence[Path],
+    initial_snapshots: Sequence[Mapping[str, Any]],
+) -> None:
+    current_head = _resolve_runtime_head(repository_root)
+    if current_head != runtime_head:
+        raise ValueError("Runtime Git HEAD changed while plotting.")
+    _require_clean_tracked_worktree(repository_root)
+    for snapshot_path in snapshot_paths:
+        if snapshot_path.is_symlink() or not snapshot_path.is_file():
+            raise ValueError("Snapshotted plot provenance file changed while plotting.")
+    try:
+        current_snapshots = _fingerprint_paths(snapshot_paths, repository_root)
+    except OSError as error:
+        raise ValueError("Snapshotted plot provenance file changed while plotting.") from error
+    if tuple(current_snapshots) != tuple(initial_snapshots):
+        raise ValueError("Snapshotted plot provenance file changed while plotting.")
 
 
 def _reject_protected_input_path(logical_path: str) -> None:
@@ -395,9 +1069,25 @@ def _require_public_regular_file(path: Path, repository_root: Path) -> None:
 
 def _resolve_repository_path(repository_root: Path, relative_path: str) -> Path:
     normalized = validate_repository_relative_path(relative_path)
-    resolved = (repository_root / normalized).resolve()
-    repository_relative_path(resolved, repository_root)
-    return resolved
+    candidate = Path(os.path.abspath(repository_root / normalized))
+    try:
+        candidate.relative_to(repository_root)
+    except ValueError as error:
+        raise ValueError("Path is outside the repository root.") from error
+    _reject_symlink_components(candidate, repository_root)
+    return candidate
+
+
+def _reject_symlink_components(path: Path, repository_root: Path) -> None:
+    try:
+        relative_path = path.relative_to(repository_root)
+    except ValueError as error:
+        raise ValueError("Path is outside the repository root.") from error
+    current = repository_root
+    for component in relative_path.parts:
+        current = current / component
+        if current.is_symlink():
+            raise ValueError("Repository artifact paths must not contain symlinks.")
 
 
 def _require_finalized_directory(path: Path, label: str) -> None:
@@ -1020,14 +1710,14 @@ def _save_figure_pair(
             png_file,
             format="png",
             dpi=180,
-            metadata={"Software": "dna-flex-pretrain Milestone 3D-B"},
+            metadata={"Software": "dna-flex-pretrain Milestone 3D-B.1"},
         )
     with open(pdf_path, "xb") as pdf_file:
         figure.savefig(
             pdf_file,
             format="pdf",
             metadata={
-                "Creator": "dna-flex-pretrain Milestone 3D-B",
+                "Creator": "dna-flex-pretrain Milestone 3D-B.1",
                 "Producer": "matplotlib",
                 "CreationDate": None,
                 "ModDate": None,
@@ -1042,28 +1732,12 @@ def _write_plot_manifest(
     plot_logical_directory: str,
     staging_directory: Path,
     input_fingerprints: Sequence[Mapping[str, Any]],
-    split_manifest: Mapping[str, Any],
-    subset_manifest: Mapping[str, Any],
+    bindings: Mapping[str, Any],
+    runtime_head: str,
+    entry_point_fingerprint: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    output_filenames = (
-        COUNT_SOURCE_FILENAME,
-        AFFINITY_SOURCE_FILENAME,
-        SUBSET_SOURCE_FILENAME,
-        LEAKAGE_SOURCE_FILENAME,
-        COMPARISON_SOURCE_FILENAME,
-        "{0}.png".format(COUNT_PLOT_STEM),
-        "{0}.pdf".format(COUNT_PLOT_STEM),
-        "{0}.png".format(AFFINITY_PLOT_STEM),
-        "{0}.pdf".format(AFFINITY_PLOT_STEM),
-        "{0}.png".format(SUBSET_PLOT_STEM),
-        "{0}.pdf".format(SUBSET_PLOT_STEM),
-        "{0}.png".format(LEAKAGE_PLOT_STEM),
-        "{0}.pdf".format(LEAKAGE_PLOT_STEM),
-        "{0}.png".format(COMPARISON_PLOT_STEM),
-        "{0}.pdf".format(COMPARISON_PLOT_STEM),
-    )
     output_fingerprints = []
-    for filename in output_filenames:
+    for filename in OUTPUT_FILENAMES:
         logical_path = Path(plot_logical_directory, filename).as_posix()
         fingerprint = fingerprint_file(
             staging_directory / filename,
@@ -1075,11 +1749,56 @@ def _write_plot_manifest(
     manifest = build_hashed_manifest(
         PLOT_MANIFEST_SCHEMA_VERSION,
         {
+            "study_identifier": config["study"]["identifier"],
             "dataset_identifier": config["study"]["dataset_identifier"],
-            "config_path": repository_relative_path(config_file, repository_root),
-            "config_sha256": hash_file_bytes(config_file),
-            "split_manifest_hash": split_manifest["manifest_hash"],
-            "subset_set_manifest_hash": subset_manifest["manifest_hash"],
+            "external_source_commit": config["provenance"][
+                "external_source_commit"
+            ],
+            "source_foundation_commit": config["provenance"][
+                "source_foundation_commit"
+            ],
+            "split_pipeline_commit": config["provenance"][
+                "split_pipeline_commit"
+            ],
+            "plot_generator_commit": runtime_head,
+            "plot_generator_tracked_worktree_clean": True,
+            "plotting_entry_point_path": entry_point_fingerprint["path"],
+            "plotting_entry_point_byte_size": entry_point_fingerprint[
+                "byte_size"
+            ],
+            "plotting_entry_point_sha256": entry_point_fingerprint["sha256"],
+            "plot_config_path": repository_relative_path(
+                config_file,
+                repository_root,
+            ),
+            "plot_config_sha256": hash_file_bytes(config_file),
+            "primary_split_config_path": repository_relative_path(
+                bindings["primary_config_path"],
+                repository_root,
+            ),
+            "primary_split_config_sha256": bindings["primary_config_sha256"],
+            "primary_split_id": config["inputs"]["primary_split_id"],
+            "primary_split_manifest_path": repository_relative_path(
+                bindings["split_manifest_path"],
+                repository_root,
+            ),
+            "primary_split_manifest_hash": bindings["split_manifest"][
+                "manifest_hash"
+            ],
+            "primary_split_manifest_file_sha256": hash_file_bytes(
+                bindings["split_manifest_path"]
+            ),
+            "subset_set_id": config["inputs"]["subset_set_id"],
+            "subset_set_manifest_path": repository_relative_path(
+                bindings["subset_manifest_path"],
+                repository_root,
+            ),
+            "subset_set_manifest_hash": bindings["subset_manifest"][
+                "manifest_hash"
+            ],
+            "subset_set_manifest_file_sha256": hash_file_bytes(
+                bindings["subset_manifest_path"]
+            ),
             "plot_directory": plot_logical_directory,
             "inputs": list(input_fingerprints),
             "outputs": output_fingerprints,
@@ -1092,14 +1811,251 @@ def _write_plot_manifest(
     return manifest
 
 
+def _load_json_mapping(path: Path, label: str) -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as input_file:
+        payload = json.load(input_file)
+    if not isinstance(payload, Mapping):
+        raise ValueError("{0} must be a mapping.".format(label))
+    return dict(payload)
+
+
+def _validate_fingerprint_collection(
+    entries: Any,
+    expected_paths: Sequence[str],
+    repository_root: Path,
+    label: str,
+) -> None:
+    if not isinstance(entries, Sequence) or isinstance(entries, (str, bytes)):
+        raise ValueError("{0} fingerprints must be a sequence.".format(label))
+    expected = set(expected_paths)
+    observed_paths = []
+    normalized_entries = []
+    for entry in entries:
+        if not isinstance(entry, Mapping):
+            raise ValueError("{0} fingerprint must be a mapping.".format(label))
+        _require_exact_fields(
+            entry,
+            ("path", "byte_size", "sha256"),
+            "{0} fingerprint".format(label),
+        )
+        logical_path = validate_repository_relative_path(str(entry["path"]))
+        byte_size = entry["byte_size"]
+        if isinstance(byte_size, bool) or not isinstance(byte_size, int):
+            raise ValueError("{0} byte size must be an integer.".format(label))
+        if byte_size < 0:
+            raise ValueError("{0} byte size must be nonnegative.".format(label))
+        sha256 = _require_sha256(entry["sha256"], "{0} SHA-256".format(label))
+        observed_paths.append(logical_path)
+        normalized_entries.append(
+            {
+                "path": logical_path,
+                "byte_size": byte_size,
+                "sha256": sha256,
+            }
+        )
+    if observed_paths != sorted(observed_paths):
+        raise ValueError("{0} fingerprints must be path-sorted.".format(label))
+    if len(observed_paths) != len(set(observed_paths)):
+        raise ValueError("{0} fingerprint paths must be unique.".format(label))
+    if set(observed_paths) != expected:
+        raise ValueError("{0} fingerprint path set differs.".format(label))
+    for entry in normalized_entries:
+        physical_path = _resolve_repository_path(repository_root, entry["path"])
+        if physical_path.is_symlink() or not physical_path.is_file():
+            raise ValueError("{0} fingerprint target must be a regular file.".format(label))
+        observed = fingerprint_file(physical_path, entry["path"]).to_dict()
+        if observed != entry:
+            raise ValueError("{0} fingerprint mismatch: {1}".format(label, entry["path"]))
+
+
+def _verify_historical_entry_point(
+    repository_root: Path,
+    manifest: Mapping[str, Any],
+) -> None:
+    blob = _git_blob_bytes(
+        repository_root,
+        manifest["plot_generator_commit"],
+        manifest["plotting_entry_point_path"],
+    )
+    if len(blob) != manifest["plotting_entry_point_byte_size"]:
+        raise ValueError("Historical plotting entry-point byte size differs.")
+    if hashlib.sha256(blob).hexdigest() != manifest["plotting_entry_point_sha256"]:
+        raise ValueError("Historical plotting entry-point fingerprint differs.")
+
+
+def validate_primary_split_plot_manifest(
+    manifest_path: Path | str,
+    repository_root: Path | str,
+    expected_plot_generator_commit: str,
+) -> Dict[str, Any]:
+    """Validate v2 plot bytes and the producer blob at a historical commit.
+
+    The current checkout may be newer than, and need not be clean like, the
+    explicitly expected historical generator commit.
+    """
+
+    root = Path(os.path.abspath(repository_root))
+    expected_generator = _require_full_commit(
+        expected_plot_generator_commit,
+        "Expected historical plot-generator commit",
+    )
+    manifest_file = _resolve_repository_file(root, manifest_path)
+    if manifest_file.is_symlink() or not manifest_file.is_file():
+        raise FileNotFoundError("Plot manifest must be a regular file.")
+    manifest = _load_json_mapping(manifest_file, "Plot manifest")
+    if manifest.get("schema_version") != PLOT_MANIFEST_SCHEMA_VERSION:
+        raise ValueError("A v2 Exd-Hox primary-split plot manifest is required.")
+    _require_exact_fields(manifest, tuple(PLOT_MANIFEST_FIELDS), "Plot manifest")
+    _require_sha256(manifest.get("manifest_hash"), "Manifest hash")
+    validate_hashed_manifest(manifest)
+
+    for field in (
+        "external_source_commit",
+        "source_foundation_commit",
+        "split_pipeline_commit",
+        "plot_generator_commit",
+    ):
+        _require_full_commit(manifest.get(field), field)
+    if manifest["plot_generator_commit"] != expected_generator:
+        raise ValueError("Expected historical plot-generator commit differs.")
+    if manifest["plot_generator_tracked_worktree_clean"] is not True:
+        raise ValueError("Generation tracked-worktree state was not clean.")
+    if manifest["plotting_entry_point_path"] != PLOTTING_ENTRY_POINT:
+        raise ValueError("Plotting entry-point path differs.")
+    entry_point_byte_size = manifest["plotting_entry_point_byte_size"]
+    if isinstance(entry_point_byte_size, bool) or not isinstance(
+        entry_point_byte_size,
+        int,
+    ):
+        raise ValueError("Plotting entry-point byte size must be an integer.")
+    if entry_point_byte_size < 0:
+        raise ValueError("Plotting entry-point byte size must be nonnegative.")
+    _require_sha256(
+        manifest["plotting_entry_point_sha256"],
+        "Plotting entry-point SHA-256",
+    )
+
+    if manifest["plot_config_path"] != PLOT_CONFIG_LOGICAL_PATH:
+        raise ValueError("Plot config path differs from the canonical v2 path.")
+    config_file = _resolve_repository_path(root, manifest["plot_config_path"])
+    _require_public_regular_file(config_file, root)
+    if hash_file_bytes(config_file) != manifest["plot_config_sha256"]:
+        raise ValueError("Plot config fingerprint mismatch.")
+    config = _load_plot_config(config_file)
+    bindings = _load_bound_plot_inputs(config, config_file, root)
+
+    expected_scalar_fields = {
+        "study_identifier": config["study"]["identifier"],
+        "dataset_identifier": config["study"]["dataset_identifier"],
+        "external_source_commit": config["provenance"]["external_source_commit"],
+        "source_foundation_commit": config["provenance"][
+            "source_foundation_commit"
+        ],
+        "split_pipeline_commit": config["provenance"]["split_pipeline_commit"],
+        "plotting_entry_point_path": config["provenance"][
+            "plotting_entry_point"
+        ],
+        "plot_config_path": repository_relative_path(config_file, root),
+        "plot_config_sha256": hash_file_bytes(config_file),
+        "primary_split_config_path": repository_relative_path(
+            bindings["primary_config_path"],
+            root,
+        ),
+        "primary_split_config_sha256": bindings["primary_config_sha256"],
+        "primary_split_id": config["inputs"]["primary_split_id"],
+        "primary_split_manifest_path": repository_relative_path(
+            bindings["split_manifest_path"],
+            root,
+        ),
+        "primary_split_manifest_hash": bindings["split_manifest"][
+            "manifest_hash"
+        ],
+        "primary_split_manifest_file_sha256": hash_file_bytes(
+            bindings["split_manifest_path"]
+        ),
+        "subset_set_id": config["inputs"]["subset_set_id"],
+        "subset_set_manifest_path": repository_relative_path(
+            bindings["subset_manifest_path"],
+            root,
+        ),
+        "subset_set_manifest_hash": bindings["subset_manifest"]["manifest_hash"],
+        "subset_set_manifest_file_sha256": hash_file_bytes(
+            bindings["subset_manifest_path"]
+        ),
+        "plot_directory": config["outputs"]["plot_directory"],
+        "test_target_policy": (
+            "aggregate_test_counts_only_no_test_affinity_distribution"
+        ),
+    }
+    for field, expected_value in expected_scalar_fields.items():
+        if manifest[field] != expected_value:
+            raise ValueError("Plot manifest {0} differs from bound config.".format(field))
+
+    _verify_commit_chain(
+        root,
+        manifest["source_foundation_commit"],
+        manifest["split_pipeline_commit"],
+        manifest["plot_generator_commit"],
+    )
+    _verify_historical_entry_point(root, manifest)
+
+    expected_input_paths = []
+    for input_path in bindings["input_paths"]:
+        expected_input_paths.append(repository_relative_path(input_path, root))
+    _validate_fingerprint_collection(
+        manifest["inputs"],
+        expected_input_paths,
+        root,
+        "Input",
+    )
+
+    plot_directory = _resolve_repository_path(root, manifest["plot_directory"])
+    if plot_directory.is_symlink() or not plot_directory.is_dir():
+        raise ValueError("Plot directory must be a regular directory.")
+    expected_output_paths = []
+    for filename in OUTPUT_FILENAMES:
+        expected_output_paths.append(
+            Path(manifest["plot_directory"], filename).as_posix()
+        )
+    _validate_fingerprint_collection(
+        manifest["outputs"],
+        expected_output_paths,
+        root,
+        "Output",
+    )
+    expected_directory_names = set(OUTPUT_FILENAMES)
+    expected_directory_names.add(PLOT_MANIFEST_FILENAME)
+    observed_directory_names = set()
+    for path in plot_directory.iterdir():
+        observed_directory_names.add(path.name)
+    if observed_directory_names != expected_directory_names:
+        raise ValueError("Plot directory contains missing, extra, or non-v2 files.")
+    expected_manifest_path = plot_directory / PLOT_MANIFEST_FILENAME
+    if manifest_file.resolve() != expected_manifest_path.resolve():
+        raise ValueError("Plot manifest is relocated from its v2 output directory.")
+    return manifest
+
+
 def main(argv=None):
-    """Generate immutable primary-split plot artifacts."""
+    """Generate immutable v2 plots or validate an existing v2 manifest."""
 
     arguments = parse_arguments(argv)
-    manifest = plot_primary_split_tables(
-        config_path=arguments.config,
-        repository_root=arguments.repository_root,
-    )
+    if arguments.validate_manifest:
+        manifest = validate_primary_split_plot_manifest(
+            manifest_path=arguments.validate_manifest,
+            repository_root=arguments.repository_root,
+            expected_plot_generator_commit=(
+                arguments.expected_plot_generator_commit
+            ),
+        )
+    else:
+        manifest = plot_primary_split_tables(
+            config_path=arguments.config,
+            repository_root=arguments.repository_root,
+            expected_plot_generator_commit=(
+                arguments.expected_plot_generator_commit
+            ),
+        )
     print(
         json.dumps(
             manifest,
