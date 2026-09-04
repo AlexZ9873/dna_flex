@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from dataclasses import dataclass
 import hashlib
 import json
 import math
@@ -59,19 +60,14 @@ from src.downstream_fingerprints import (
 )
 
 
-PLOT_CONFIG_SCHEMA_VERSION = "exd_hox_primary_split_plot_config.v2"
 PRIMARY_CONFIG_SCHEMA_VERSION = "exd_hox_primary_split_config.v1"
 SPLIT_MANIFEST_SCHEMA_VERSION = "exd_hox_primary_split_manifest.v1"
 SUBSET_MANIFEST_SCHEMA_VERSION = "exd_hox_subset_set_manifest.v1"
-PLOT_MANIFEST_SCHEMA_VERSION = "exd_hox_primary_split_plot_manifest.v2"
-
-PLOT_CONFIG_LOGICAL_PATH = "configs/exd_hox_primary_split_plot_v2.yaml"
 PLOTTING_ENTRY_POINT = "scripts/plot/plot_exd_hox_primary_split.py"
 PRIMARY_CONFIG_LOGICAL_PATH = "configs/exd_hox_primary_split_v1.yaml"
 EXTERNAL_SOURCE_COMMIT = "9e6d6ef0355558c98855b83a9c21fe11999f65d9"
 SOURCE_FOUNDATION_COMMIT = "62a99688cbd3af97f081df500223ba6f55cd0fe0"
 SPLIT_PIPELINE_COMMIT = "65c6bddc0f4570e7a6cf5a90f5f6ef5801e01d27"
-PLOT_LOGICAL_DIRECTORY = "plots/exd_hox_primary_split_v2"
 
 RAW_FILE_SHA256 = {
     "data/raw/exd_hox_selex_canonical_v1/AbdA/AbdA_test.h5": (
@@ -131,36 +127,118 @@ SUBSET_INPUT_FILENAME = "exd_hox_nested_subset_levels_v1.tsv"
 SPLIT_MANIFEST_FILENAME = "exd_hox_primary_split_manifest_v1.json"
 SUBSET_MANIFEST_FILENAME = "exd_hox_subset_set_manifest_v1.json"
 
-COUNT_SOURCE_FILENAME = "exd_hox_primary_split_counts_plot_source_v2.tsv"
-AFFINITY_SOURCE_FILENAME = "exd_hox_primary_split_affinity_plot_source_v2.tsv"
-SUBSET_SOURCE_FILENAME = "exd_hox_nested_subset_counts_plot_source_v2.tsv"
-LEAKAGE_SOURCE_FILENAME = "exd_hox_primary_split_leakage_plot_source_v2.tsv"
-COMPARISON_SOURCE_FILENAME = "exd_hox_paper_vs_primary_split_plot_source_v2.tsv"
-PLOT_MANIFEST_FILENAME = "exd_hox_primary_split_plot_manifest_v2.json"
+@dataclass(frozen=True)
+class PlotContract:
+    """Canonical paths and filenames for one plot-contract schema."""
 
-COUNT_PLOT_STEM = "exd_hox_primary_split_counts_v2"
-AFFINITY_PLOT_STEM = "exd_hox_primary_split_affinity_distributions_v2"
-SUBSET_PLOT_STEM = "exd_hox_nested_subset_counts_v2"
-LEAKAGE_PLOT_STEM = "exd_hox_primary_split_leakage_v2"
-COMPARISON_PLOT_STEM = "exd_hox_paper_vs_primary_split_counts_v2"
+    config_schema_version: str
+    config_logical_path: str
+    manifest_schema_version: str
+    manifest_filename: str
+    plot_logical_directory: str
+    count_source_filename: str
+    affinity_source_filename: str
+    subset_source_filename: str
+    leakage_source_filename: str
+    comparison_source_filename: str
+    count_plot_stem: str
+    affinity_plot_stem: str
+    subset_plot_stem: str
+    leakage_plot_stem: str
+    comparison_plot_stem: str
+    creator_metadata: str
 
-OUTPUT_FILENAMES = (
-    COUNT_SOURCE_FILENAME,
-    AFFINITY_SOURCE_FILENAME,
-    SUBSET_SOURCE_FILENAME,
-    LEAKAGE_SOURCE_FILENAME,
-    COMPARISON_SOURCE_FILENAME,
-    "{0}.png".format(COUNT_PLOT_STEM),
-    "{0}.pdf".format(COUNT_PLOT_STEM),
-    "{0}.png".format(AFFINITY_PLOT_STEM),
-    "{0}.pdf".format(AFFINITY_PLOT_STEM),
-    "{0}.png".format(SUBSET_PLOT_STEM),
-    "{0}.pdf".format(SUBSET_PLOT_STEM),
-    "{0}.png".format(LEAKAGE_PLOT_STEM),
-    "{0}.pdf".format(LEAKAGE_PLOT_STEM),
-    "{0}.png".format(COMPARISON_PLOT_STEM),
-    "{0}.pdf".format(COMPARISON_PLOT_STEM),
+    @property
+    def output_filenames(self) -> Tuple[str, ...]:
+        """Return the five source tables and five PNG/PDF pairs."""
+
+        return (
+            self.count_source_filename,
+            self.affinity_source_filename,
+            self.subset_source_filename,
+            self.leakage_source_filename,
+            self.comparison_source_filename,
+            "{0}.png".format(self.count_plot_stem),
+            "{0}.pdf".format(self.count_plot_stem),
+            "{0}.png".format(self.affinity_plot_stem),
+            "{0}.pdf".format(self.affinity_plot_stem),
+            "{0}.png".format(self.subset_plot_stem),
+            "{0}.pdf".format(self.subset_plot_stem),
+            "{0}.png".format(self.leakage_plot_stem),
+            "{0}.pdf".format(self.leakage_plot_stem),
+            "{0}.png".format(self.comparison_plot_stem),
+            "{0}.pdf".format(self.comparison_plot_stem),
+        )
+
+
+V2_PLOT_CONTRACT = PlotContract(
+    config_schema_version="exd_hox_primary_split_plot_config.v2",
+    config_logical_path="configs/exd_hox_primary_split_plot_v2.yaml",
+    manifest_schema_version="exd_hox_primary_split_plot_manifest.v2",
+    manifest_filename="exd_hox_primary_split_plot_manifest_v2.json",
+    plot_logical_directory="plots/exd_hox_primary_split_v2",
+    count_source_filename="exd_hox_primary_split_counts_plot_source_v2.tsv",
+    affinity_source_filename="exd_hox_primary_split_affinity_plot_source_v2.tsv",
+    subset_source_filename="exd_hox_nested_subset_counts_plot_source_v2.tsv",
+    leakage_source_filename="exd_hox_primary_split_leakage_plot_source_v2.tsv",
+    comparison_source_filename=(
+        "exd_hox_paper_vs_primary_split_plot_source_v2.tsv"
+    ),
+    count_plot_stem="exd_hox_primary_split_counts_v2",
+    affinity_plot_stem="exd_hox_primary_split_affinity_distributions_v2",
+    subset_plot_stem="exd_hox_nested_subset_counts_v2",
+    leakage_plot_stem="exd_hox_primary_split_leakage_v2",
+    comparison_plot_stem="exd_hox_paper_vs_primary_split_counts_v2",
+    creator_metadata="dna-flex-pretrain Milestone 3D-B.1",
 )
+V3_PLOT_CONTRACT = PlotContract(
+    config_schema_version="exd_hox_primary_split_plot_config.v3",
+    config_logical_path="configs/exd_hox_primary_split_plot_v3.yaml",
+    manifest_schema_version="exd_hox_primary_split_plot_manifest.v3",
+    manifest_filename="exd_hox_primary_split_plot_manifest_v3.json",
+    plot_logical_directory="plots/exd_hox_primary_split_v3",
+    count_source_filename="exd_hox_primary_split_counts_plot_source_v3.tsv",
+    affinity_source_filename="exd_hox_primary_split_affinity_plot_source_v3.tsv",
+    subset_source_filename="exd_hox_nested_subset_counts_plot_source_v3.tsv",
+    leakage_source_filename="exd_hox_primary_split_leakage_plot_source_v3.tsv",
+    comparison_source_filename=(
+        "exd_hox_paper_vs_primary_split_plot_source_v3.tsv"
+    ),
+    count_plot_stem="exd_hox_primary_split_counts_v3",
+    affinity_plot_stem="exd_hox_primary_split_affinity_distributions_v3",
+    subset_plot_stem="exd_hox_nested_subset_counts_v3",
+    leakage_plot_stem="exd_hox_primary_split_leakage_v3",
+    comparison_plot_stem="exd_hox_paper_vs_primary_split_counts_v3",
+    creator_metadata="dna-flex-pretrain Milestone 3D-B.2",
+)
+
+PLOT_CONTRACTS_BY_CONFIG_SCHEMA = {
+    V2_PLOT_CONTRACT.config_schema_version: V2_PLOT_CONTRACT,
+    V3_PLOT_CONTRACT.config_schema_version: V3_PLOT_CONTRACT,
+}
+PLOT_CONTRACTS_BY_MANIFEST_SCHEMA = {
+    V2_PLOT_CONTRACT.manifest_schema_version: V2_PLOT_CONTRACT,
+    V3_PLOT_CONTRACT.manifest_schema_version: V3_PLOT_CONTRACT,
+}
+DEFAULT_PLOT_CONTRACT = V3_PLOT_CONTRACT
+
+# These names retain the public API while identifying the generation default.
+PLOT_CONFIG_SCHEMA_VERSION = DEFAULT_PLOT_CONTRACT.config_schema_version
+PLOT_MANIFEST_SCHEMA_VERSION = DEFAULT_PLOT_CONTRACT.manifest_schema_version
+PLOT_CONFIG_LOGICAL_PATH = DEFAULT_PLOT_CONTRACT.config_logical_path
+PLOT_LOGICAL_DIRECTORY = DEFAULT_PLOT_CONTRACT.plot_logical_directory
+COUNT_SOURCE_FILENAME = DEFAULT_PLOT_CONTRACT.count_source_filename
+AFFINITY_SOURCE_FILENAME = DEFAULT_PLOT_CONTRACT.affinity_source_filename
+SUBSET_SOURCE_FILENAME = DEFAULT_PLOT_CONTRACT.subset_source_filename
+LEAKAGE_SOURCE_FILENAME = DEFAULT_PLOT_CONTRACT.leakage_source_filename
+COMPARISON_SOURCE_FILENAME = DEFAULT_PLOT_CONTRACT.comparison_source_filename
+PLOT_MANIFEST_FILENAME = DEFAULT_PLOT_CONTRACT.manifest_filename
+COUNT_PLOT_STEM = DEFAULT_PLOT_CONTRACT.count_plot_stem
+AFFINITY_PLOT_STEM = DEFAULT_PLOT_CONTRACT.affinity_plot_stem
+SUBSET_PLOT_STEM = DEFAULT_PLOT_CONTRACT.subset_plot_stem
+LEAKAGE_PLOT_STEM = DEFAULT_PLOT_CONTRACT.leakage_plot_stem
+COMPARISON_PLOT_STEM = DEFAULT_PLOT_CONTRACT.comparison_plot_stem
+OUTPUT_FILENAMES = DEFAULT_PLOT_CONTRACT.output_filenames
 
 PLOT_MANIFEST_FIELDS = frozenset(
     (
@@ -274,13 +352,33 @@ FORBIDDEN_PLAINTEXT_FIELDS = frozenset(
     )
 )
 
+SUBSET_FIGURE_TITLE = "Requested versus actual nested low-data counts"
+SUBSET_FIGURE_CAPTION = (
+    "Absolute levels are requested counts; percentage levels are fractions of "
+    "the full primary training split.\nPercentage requests may alias an "
+    "absolute canonical level."
+)
+LEAKAGE_FIGURE_CAPTION = (
+    "RC-equivalent overlap is inclusive of exact-sequence matches; the three "
+    "series are not additive.\nRC-only counts exclude exact matches."
+)
+COMPARISON_FIGURE_TITLE = (
+    "Supplied split row occurrences versus primary logical examples"
+)
+COMPARISON_FIGURE_CAPTION = (
+    "For each TF, supplied-split bars count labeled row occurrences in the "
+    "supplied train/test files,\nwhereas primary-split bars count reconciled "
+    "logical labeled examples after exact/RC grouping.\nThe two bar families "
+    "therefore use different counting units."
+)
+
 
 def parse_arguments(argv=None):
     """Parse command-line arguments."""
 
     parser = argparse.ArgumentParser(
         description=(
-            "Generate or validate v2 Exd-Hox plots with commit-bound "
+            "Generate or validate versioned Exd-Hox plots with commit-bound "
             "code provenance."
         )
     )
@@ -298,7 +396,7 @@ def parse_arguments(argv=None):
         "--validate-manifest",
         metavar="PATH",
         help=(
-            "Validate an existing v2 plot manifest and its historical "
+            "Validate an existing v2 or v3 plot manifest and its historical "
             "producer blob instead of generating plots."
         ),
     )
@@ -310,17 +408,18 @@ def plot_primary_split_tables(
     repository_root: Path | str,
     expected_plot_generator_commit: str,
 ) -> Dict[str, Any]:
-    """Create five immutable v2 plot families from finalized public tables."""
+    """Create five immutable plot families from finalized public tables."""
 
     root = Path(os.path.abspath(repository_root))
     config_file = _resolve_repository_file(root, config_path)
-    config_logical_path = repository_relative_path(config_file, root)
-    if config_logical_path != PLOT_CONFIG_LOGICAL_PATH:
-        raise ValueError("The v2 plot config must use its canonical path.")
-    _reject_protected_input_path(config_logical_path)
+    _reject_protected_input_path(repository_relative_path(config_file, root))
     if config_file.is_symlink() or not config_file.is_file():
         raise FileNotFoundError("Plot config must be a regular public file.")
     config = _load_plot_config(config_file)
+    contract = _plot_contract_for_config_schema(config["schema_version"])
+    config_logical_path = repository_relative_path(config_file, root)
+    if config_logical_path != contract.config_logical_path:
+        raise ValueError("The plot config must use its contract's canonical path.")
     bindings = _load_bound_plot_inputs(config, config_file, root)
     plot_logical_directory = str(config["outputs"]["plot_directory"])
     plot_directory = _resolve_repository_path(root, plot_logical_directory)
@@ -350,7 +449,7 @@ def plot_primary_split_tables(
         snapshot_paths=snapshot_paths,
         initial_snapshots=initial_snapshots,
     )
-    revalidated_config = _load_plot_config(config_file)
+    revalidated_config = _load_plot_config(config_file, contract)
     if revalidated_config != config:
         raise ValueError("Plot config changed before generation snapshot validation.")
     revalidated_bindings = _load_bound_plot_inputs(
@@ -407,47 +506,50 @@ def plot_primary_split_tables(
     staging_directory.mkdir()
     try:
         write_tsv_exclusive(
-            staging_directory / COUNT_SOURCE_FILENAME,
+            staging_directory / contract.count_source_filename,
             COUNT_SOURCE_FIELDS,
             count_source_rows,
         )
         write_tsv_exclusive(
-            staging_directory / AFFINITY_SOURCE_FILENAME,
+            staging_directory / contract.affinity_source_filename,
             AFFINITY_SOURCE_FIELDS,
             affinity_source_rows,
         )
         write_tsv_exclusive(
-            staging_directory / SUBSET_SOURCE_FILENAME,
+            staging_directory / contract.subset_source_filename,
             SUBSET_INPUT_FIELDS,
             subset_source_rows,
         )
         write_tsv_exclusive(
-            staging_directory / LEAKAGE_SOURCE_FILENAME,
+            staging_directory / contract.leakage_source_filename,
             LEAKAGE_INPUT_FIELDS,
             leakage_source_rows,
         )
         write_tsv_exclusive(
-            staging_directory / COMPARISON_SOURCE_FILENAME,
+            staging_directory / contract.comparison_source_filename,
             COMPARISON_SOURCE_FIELDS,
             comparison_source_rows,
         )
 
-        _plot_primary_counts(staging_directory, count_source_rows)
+        _plot_primary_counts(staging_directory, count_source_rows, contract)
         _plot_affinity_distributions(
             staging_directory,
             transcription_factors,
             affinity_source_rows,
+            contract,
         )
         _plot_subset_counts(
             staging_directory,
             transcription_factors,
             subset_source_rows,
+            contract,
         )
-        _plot_leakage(staging_directory, leakage_source_rows)
+        _plot_leakage(staging_directory, leakage_source_rows, contract)
         _plot_protocol_comparison(
             staging_directory,
             transcription_factors,
             comparison_source_rows,
+            contract,
         )
 
         manifest = _write_plot_manifest(
@@ -460,6 +562,7 @@ def plot_primary_split_tables(
             bindings=bindings,
             runtime_head=runtime_head,
             entry_point_fingerprint=entry_point_fingerprint,
+            contract=contract,
         )
         _recheck_generation_state(
             repository_root=root,
@@ -474,13 +577,35 @@ def plot_primary_split_tables(
     return manifest
 
 
-def _load_plot_config(path: Path) -> Dict[str, Any]:
+def _plot_contract_for_config_schema(schema_version: Any) -> PlotContract:
+    if not isinstance(schema_version, str):
+        raise ValueError("Unsupported Exd-Hox primary split plot config schema.")
+    contract = PLOT_CONTRACTS_BY_CONFIG_SCHEMA.get(schema_version)
+    if contract is None:
+        raise ValueError("Unsupported Exd-Hox primary split plot config schema.")
+    return contract
+
+
+def _plot_contract_for_manifest_schema(schema_version: Any) -> PlotContract:
+    if not isinstance(schema_version, str):
+        raise ValueError("Unsupported Exd-Hox primary split plot manifest schema.")
+    contract = PLOT_CONTRACTS_BY_MANIFEST_SCHEMA.get(schema_version)
+    if contract is None:
+        raise ValueError("Unsupported Exd-Hox primary split plot manifest schema.")
+    return contract
+
+
+def _load_plot_config(
+    path: Path,
+    expected_contract: PlotContract | None = None,
+) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as input_file:
         payload = yaml.safe_load(input_file)
     if not isinstance(payload, Mapping):
         raise ValueError("Primary split plot config must be a mapping.")
-    if payload.get("schema_version") != PLOT_CONFIG_SCHEMA_VERSION:
-        raise ValueError("Unsupported Exd-Hox primary split plot config schema.")
+    contract = _plot_contract_for_config_schema(payload.get("schema_version"))
+    if expected_contract is not None and contract != expected_contract:
+        raise ValueError("Plot config schema differs from the manifest contract.")
     _require_exact_fields(
         payload,
         ("schema_version", "study", "provenance", "inputs", "outputs"),
@@ -592,8 +717,8 @@ def _load_plot_config(path: Path) -> Dict[str, Any]:
 
     _require_exact_fields(outputs, ("plot_directory",), "Plot config outputs")
     validate_repository_relative_path(str(outputs["plot_directory"]))
-    if outputs["plot_directory"] != PLOT_LOGICAL_DIRECTORY:
-        raise ValueError("Plot config output directory differs from v2.")
+    if outputs["plot_directory"] != contract.plot_logical_directory:
+        raise ValueError("Plot config output directory differs from its contract.")
     return dict(payload)
 
 
@@ -1291,6 +1416,37 @@ def _validate_leakage_rows(rows: Sequence[Mapping[str, str]]) -> None:
             _nonnegative_integer(row[field], "Leakage {0}".format(field))
 
 
+def _low_data_display_label(request_type: Any, request_value: Any) -> str:
+    """Return a strict public label without consulting an internal level ID."""
+
+    if request_type == "absolute":
+        if isinstance(request_value, bool):
+            raise ValueError("Absolute low-data request must be a positive integer.")
+        text = str(request_value)
+        if re.fullmatch(r"[1-9][0-9]*", text) is None:
+            raise ValueError("Absolute low-data request must be a positive integer.")
+        return "n={0}".format(int(text))
+    if request_type == "fractional":
+        if isinstance(request_value, bool):
+            raise ValueError("Fractional low-data request must be in (0, 1].")
+        try:
+            fraction = float(request_value)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                "Fractional low-data request must be in (0, 1]."
+            ) from error
+        if not math.isfinite(fraction) or fraction <= 0.0 or fraction > 1.0:
+            raise ValueError("Fractional low-data request must be in (0, 1].")
+        percentage = fraction * 100.0
+        nearest_integer = round(percentage)
+        if math.isclose(percentage, nearest_integer, abs_tol=1e-12):
+            percentage_text = str(int(nearest_integer))
+        else:
+            percentage_text = "{0:.12g}".format(percentage)
+        return "{0}%".format(percentage_text)
+    raise ValueError("Unknown low-data request type: {0}".format(request_type))
+
+
 def _validate_subset_rows(
     transcription_factors: Sequence[str],
     rows: Sequence[Mapping[str, str]],
@@ -1307,6 +1463,7 @@ def _validate_subset_rows(
         if key in seen:
             raise ValueError("Duplicate subset level row.")
         seen.add(key)
+        _low_data_display_label(row["request_type"], row["request_value"])
         for field in (
             "unaliased_requested_logical_example_count",
             "canonical_requested_logical_example_count",
@@ -1449,9 +1606,29 @@ def _comparison_source_rows(
     return tuple(selected)
 
 
+def _expand_limits_to_major_ticks(axis: plt.Axes) -> None:
+    """Keep every visible major tick label inside the figure geometry."""
+
+    x_ticks = axis.get_xticks()
+    if len(x_ticks) > 0:
+        left_limit, right_limit = axis.get_xlim()
+        expanded_left = min(left_limit, float(np.min(x_ticks)))
+        expanded_right = max(right_limit, float(np.max(x_ticks)))
+        if expanded_left != left_limit or expanded_right != right_limit:
+            axis.set_xlim(expanded_left, expanded_right)
+    y_ticks = axis.get_yticks()
+    if len(y_ticks) > 0:
+        lower_limit, upper_limit = axis.get_ylim()
+        expanded_lower = min(lower_limit, float(np.min(y_ticks)))
+        expanded_upper = max(upper_limit, float(np.max(y_ticks)))
+        if expanded_lower != lower_limit or expanded_upper != upper_limit:
+            axis.set_ylim(expanded_lower, expanded_upper)
+
+
 def _plot_primary_counts(
     output_directory: Path,
     rows: Sequence[Mapping[str, Any]],
+    contract: PlotContract = DEFAULT_PLOT_CONTRACT,
 ) -> None:
     labels = []
     for row in rows:
@@ -1465,7 +1642,7 @@ def _plot_primary_counts(
     positions = np.arange(len(labels))
     width = 0.25
     colors = {"training": "#3366AA", "validation": "#EE7733", "test": "#009988"}
-    figure, axis = plt.subplots(figsize=(9.4, 5.4))
+    figure, axis = plt.subplots(figsize=(9.4, 5.4), layout="constrained")
     for split_index, split in enumerate(PRIMARY_SPLITS):
         values = [by_key[(label, split)] for label in labels]
         offset = (split_index - 1) * width
@@ -1477,24 +1654,30 @@ def _plot_primary_counts(
             label=split.capitalize(),
         )
     axis.set_xticks(positions, labels)
-    axis.set_ylabel("Logical examples")
+    axis.set_ylabel("Number of logical labeled examples")
     axis.set_title("Exd-Hox primary split counts")
     axis.legend(frameon=False)
     axis.spines[["top", "right"]].set_visible(False)
-    figure.tight_layout()
-    _save_figure_pair(figure, output_directory, COUNT_PLOT_STEM)
+    axis.set_ylim(bottom=0.0)
+    _expand_limits_to_major_ticks(axis)
+    _save_figure_pair(figure, output_directory, contract.count_plot_stem, contract)
     plt.close(figure)
 
 
-def _panel_layout(panel_count: int) -> Tuple[plt.Figure, np.ndarray]:
+def _panel_layout(
+    panel_count: int,
+    figure_width: float = 10.0,
+    row_height: float = 3.1,
+) -> Tuple[plt.Figure, np.ndarray]:
     column_count = 1 if panel_count == 1 else 2
     row_count = int(math.ceil(panel_count / column_count))
     figure, axes = plt.subplots(
         row_count,
         column_count,
-        figsize=(10.0, max(4.0, 3.1 * row_count)),
+        figsize=(figure_width, max(4.0, row_height * row_count)),
         squeeze=False,
         sharex=False,
+        layout="constrained",
     )
     return figure, axes
 
@@ -1503,6 +1686,7 @@ def _plot_affinity_distributions(
     output_directory: Path,
     transcription_factors: Sequence[str],
     rows: Sequence[Mapping[str, Any]],
+    contract: PlotContract = DEFAULT_PLOT_CONTRACT,
 ) -> None:
     figure, axes = _panel_layout(len(transcription_factors))
     colors = {"training": "#3366AA", "validation": "#EE7733"}
@@ -1556,18 +1740,24 @@ def _plot_affinity_distributions(
             fontsize=9,
         )
         axis.set_title(transcription_factor)
-        axis.set_xlabel("Relative affinity")
-        axis.set_ylabel("Density")
+        axis.set_xlabel("Relative binding affinity (0–1)")
+        axis.set_ylabel("Normalized density")
         axis.spines[["top", "right"]].set_visible(False)
+        axis.set_xlim(0.0, 1.0)
+        axis.set_ylim(bottom=0.0)
+        _expand_limits_to_major_ticks(axis)
     for unused_index in range(len(transcription_factors), axes.size):
         axes.flat[unused_index].set_visible(False)
     axes.flat[0].legend(frameon=False)
     figure.suptitle(
         "Training/validation affinity distributions; test targets sealed",
-        y=0.995,
     )
-    figure.tight_layout()
-    _save_figure_pair(figure, output_directory, AFFINITY_PLOT_STEM)
+    _save_figure_pair(
+        figure,
+        output_directory,
+        contract.affinity_plot_stem,
+        contract,
+    )
     plt.close(figure)
 
 
@@ -1575,8 +1765,13 @@ def _plot_subset_counts(
     output_directory: Path,
     transcription_factors: Sequence[str],
     rows: Sequence[Mapping[str, Any]],
+    contract: PlotContract = DEFAULT_PLOT_CONTRACT,
 ) -> None:
-    figure, axes = _panel_layout(len(transcription_factors))
+    figure, axes = _panel_layout(
+        len(transcription_factors),
+        figure_width=13.0,
+        row_height=3.8,
+    )
     for axis, transcription_factor in zip(axes.flat, transcription_factors):
         selected = []
         for row in rows:
@@ -1594,7 +1789,7 @@ def _plot_subset_counts(
             marker="o",
             linewidth=1.2,
             color="#777777",
-            label="Requested",
+            label="Canonical requested count",
         )
         axis.plot(
             positions,
@@ -1602,50 +1797,77 @@ def _plot_subset_counts(
             marker="s",
             linewidth=1.2,
             color="#AA4499",
-            label="Actual",
+            label="Actual subset count",
         )
         axis.set_xticks(
             positions,
-            [row["level_id"] for row in selected],
-            rotation=45,
+            [
+                _low_data_display_label(
+                    row["request_type"],
+                    row["request_value"],
+                )
+                for row in selected
+            ],
+            rotation=40,
             horizontalalignment="right",
         )
         axis.set_title(transcription_factor)
-        axis.set_ylabel("Logical examples")
+        axis.set_xlabel("Low-data training level")
+        axis.set_ylabel("Number of labeled training examples")
         axis.spines[["top", "right"]].set_visible(False)
+        axis.set_ylim(bottom=0.0)
+        _expand_limits_to_major_ticks(axis)
     for unused_index in range(len(transcription_factors), axes.size):
         axes.flat[unused_index].set_visible(False)
     axes.flat[0].legend(frameon=False)
-    figure.suptitle("Requested versus actual nested low-data counts", y=0.995)
-    figure.tight_layout()
-    _save_figure_pair(figure, output_directory, SUBSET_PLOT_STEM)
+    figure.suptitle(
+        "{0}\n{1}".format(SUBSET_FIGURE_TITLE, SUBSET_FIGURE_CAPTION),
+        fontsize=11,
+    )
+    _save_figure_pair(figure, output_directory, contract.subset_plot_stem, contract)
     plt.close(figure)
 
 
 def _plot_leakage(
     output_directory: Path,
     rows: Sequence[Mapping[str, Any]],
+    contract: PlotContract = DEFAULT_PLOT_CONTRACT,
 ) -> None:
+    comparison_labels = {
+        "paper_split_reproduction": "Supplied paper split",
+        "primary": "Primary split",
+    }
     labels = [
         "{0}\n{1} vs {2}".format(
-            row["comparison"],
-            row["left_split"],
-            row["right_split"],
+            comparison_labels.get(row["comparison"], row["comparison"]),
+            str(row["left_split"]).capitalize(),
+            str(row["right_split"]).capitalize(),
         )
         for row in rows
     ]
     positions = np.arange(len(rows))
     width = 0.25
     series = (
-        ("Exact", "exact_sequence_overlap_group_count", "#CC6677"),
         (
-            "RC-equivalent",
+            "Exact-sequence overlap groups",
+            "exact_sequence_overlap_group_count",
+            "#CC6677",
+        ),
+        (
+            "RC-equivalent overlap groups (includes exact)",
             "reverse_complement_equivalent_overlap_group_count",
             "#4477AA",
         ),
-        ("RC-only", "reverse_complement_only_overlap_group_count", "#228833"),
+        (
+            "RC-only overlap groups",
+            "reverse_complement_only_overlap_group_count",
+            "#228833",
+        ),
     )
-    figure, axis = plt.subplots(figsize=(max(8.0, 2.1 * len(rows)), 5.4))
+    figure, axis = plt.subplots(
+        figsize=(max(10.0, 2.3 * len(rows)), 6.2),
+        layout="constrained",
+    )
     for series_index, (label, field, color) in enumerate(series):
         values = [int(row[field]) for row in rows]
         offset = (series_index - 1) * width
@@ -1653,10 +1875,12 @@ def _plot_leakage(
     axis.set_xticks(positions, labels)
     axis.set_ylabel("Cross-split overlap groups")
     axis.set_title("Exact and reverse-complement leakage audit")
-    axis.legend(frameon=False)
+    axis.legend(frameon=False, fontsize=9)
     axis.spines[["top", "right"]].set_visible(False)
-    figure.tight_layout()
-    _save_figure_pair(figure, output_directory, LEAKAGE_PLOT_STEM)
+    axis.set_ylim(bottom=0.0)
+    _expand_limits_to_major_ticks(axis)
+    figure.suptitle(LEAKAGE_FIGURE_CAPTION, fontsize=10)
+    _save_figure_pair(figure, output_directory, contract.leakage_plot_stem, contract)
     plt.close(figure)
 
 
@@ -1664,6 +1888,7 @@ def _plot_protocol_comparison(
     output_directory: Path,
     transcription_factors: Sequence[str],
     rows: Sequence[Mapping[str, Any]],
+    contract: PlotContract = DEFAULT_PLOT_CONTRACT,
 ) -> None:
     by_key = {}
     for row in rows:
@@ -1672,14 +1897,39 @@ def _plot_protocol_comparison(
         )
     positions = np.arange(len(transcription_factors))
     categories = (
-        ("paper_split_reproduction", "train", "Paper train", "#88CCEE"),
-        ("paper_split_reproduction", "test", "Paper test", "#CC6677"),
-        ("primary", "training", "Primary train", "#3366AA"),
-        ("primary", "validation", "Primary validation", "#EE7733"),
-        ("primary", "test", "Primary test", "#009988"),
+        (
+            "paper_split_reproduction",
+            "train",
+            "Supplied train (row occurrences)",
+            "#88CCEE",
+        ),
+        (
+            "paper_split_reproduction",
+            "test",
+            "Supplied test (row occurrences)",
+            "#CC6677",
+        ),
+        (
+            "primary",
+            "training",
+            "Primary training (logical labeled examples)",
+            "#3366AA",
+        ),
+        (
+            "primary",
+            "validation",
+            "Primary validation (logical labeled examples)",
+            "#EE7733",
+        ),
+        (
+            "primary",
+            "test",
+            "Primary test (logical labeled examples)",
+            "#009988",
+        ),
     )
     width = 0.16
-    figure, axis = plt.subplots(figsize=(10.2, 5.6))
+    figure, axis = plt.subplots(figsize=(13.0, 6.8), layout="constrained")
     center = (len(categories) - 1) / 2.0
     for category_index, (protocol, split, label, color) in enumerate(categories):
         values = [
@@ -1689,12 +1939,19 @@ def _plot_protocol_comparison(
         offset = (category_index - center) * width
         axis.bar(positions + offset, values, width, color=color, label=label)
     axis.set_xticks(positions, transcription_factors)
-    axis.set_ylabel("Logical examples")
-    axis.set_title("Supplied paper split versus exact/RC-safe primary split")
-    axis.legend(frameon=False, ncol=2)
+    axis.set_ylabel("Count")
+    axis.set_title(COMPARISON_FIGURE_TITLE)
+    axis.legend(frameon=False, ncol=2, fontsize=8)
     axis.spines[["top", "right"]].set_visible(False)
-    figure.tight_layout()
-    _save_figure_pair(figure, output_directory, COMPARISON_PLOT_STEM)
+    axis.set_ylim(bottom=0.0)
+    _expand_limits_to_major_ticks(axis)
+    figure.suptitle(COMPARISON_FIGURE_CAPTION, fontsize=9)
+    _save_figure_pair(
+        figure,
+        output_directory,
+        contract.comparison_plot_stem,
+        contract,
+    )
     plt.close(figure)
 
 
@@ -1702,6 +1959,7 @@ def _save_figure_pair(
     figure: plt.Figure,
     output_directory: Path,
     stem: str,
+    contract: PlotContract = DEFAULT_PLOT_CONTRACT,
 ) -> None:
     png_path = output_directory / "{0}.png".format(stem)
     pdf_path = output_directory / "{0}.pdf".format(stem)
@@ -1710,14 +1968,14 @@ def _save_figure_pair(
             png_file,
             format="png",
             dpi=180,
-            metadata={"Software": "dna-flex-pretrain Milestone 3D-B.1"},
+            metadata={"Creator": contract.creator_metadata},
         )
     with open(pdf_path, "xb") as pdf_file:
         figure.savefig(
             pdf_file,
             format="pdf",
             metadata={
-                "Creator": "dna-flex-pretrain Milestone 3D-B.1",
+                "Creator": contract.creator_metadata,
                 "Producer": "matplotlib",
                 "CreationDate": None,
                 "ModDate": None,
@@ -1735,9 +1993,10 @@ def _write_plot_manifest(
     bindings: Mapping[str, Any],
     runtime_head: str,
     entry_point_fingerprint: Mapping[str, Any],
+    contract: PlotContract,
 ) -> Dict[str, Any]:
     output_fingerprints = []
-    for filename in OUTPUT_FILENAMES:
+    for filename in contract.output_filenames:
         logical_path = Path(plot_logical_directory, filename).as_posix()
         fingerprint = fingerprint_file(
             staging_directory / filename,
@@ -1747,7 +2006,7 @@ def _write_plot_manifest(
     output_fingerprints.sort(key=lambda row: row["path"])
 
     manifest = build_hashed_manifest(
-        PLOT_MANIFEST_SCHEMA_VERSION,
+        contract.manifest_schema_version,
         {
             "study_identifier": config["study"]["identifier"],
             "dataset_identifier": config["study"]["dataset_identifier"],
@@ -1807,7 +2066,7 @@ def _write_plot_manifest(
             ),
         },
     )
-    write_json_exclusive(staging_directory / PLOT_MANIFEST_FILENAME, manifest)
+    write_json_exclusive(staging_directory / contract.manifest_filename, manifest)
     return manifest
 
 
@@ -1888,7 +2147,7 @@ def validate_primary_split_plot_manifest(
     repository_root: Path | str,
     expected_plot_generator_commit: str,
 ) -> Dict[str, Any]:
-    """Validate v2 plot bytes and the producer blob at a historical commit.
+    """Validate versioned plot bytes and the historical producer blob.
 
     The current checkout may be newer than, and need not be clean like, the
     explicitly expected historical generator commit.
@@ -1903,8 +2162,7 @@ def validate_primary_split_plot_manifest(
     if manifest_file.is_symlink() or not manifest_file.is_file():
         raise FileNotFoundError("Plot manifest must be a regular file.")
     manifest = _load_json_mapping(manifest_file, "Plot manifest")
-    if manifest.get("schema_version") != PLOT_MANIFEST_SCHEMA_VERSION:
-        raise ValueError("A v2 Exd-Hox primary-split plot manifest is required.")
+    contract = _plot_contract_for_manifest_schema(manifest.get("schema_version"))
     _require_exact_fields(manifest, tuple(PLOT_MANIFEST_FIELDS), "Plot manifest")
     _require_sha256(manifest.get("manifest_hash"), "Manifest hash")
     validate_hashed_manifest(manifest)
@@ -1935,13 +2193,15 @@ def validate_primary_split_plot_manifest(
         "Plotting entry-point SHA-256",
     )
 
-    if manifest["plot_config_path"] != PLOT_CONFIG_LOGICAL_PATH:
-        raise ValueError("Plot config path differs from the canonical v2 path.")
+    if manifest["plot_config_path"] != contract.config_logical_path:
+        raise ValueError("Plot config path differs from the contract's canonical path.")
+    if manifest["plot_directory"] != contract.plot_logical_directory:
+        raise ValueError("Plot directory differs from the manifest contract.")
     config_file = _resolve_repository_path(root, manifest["plot_config_path"])
     _require_public_regular_file(config_file, root)
     if hash_file_bytes(config_file) != manifest["plot_config_sha256"]:
         raise ValueError("Plot config fingerprint mismatch.")
-    config = _load_plot_config(config_file)
+    config = _load_plot_config(config_file, contract)
     bindings = _load_bound_plot_inputs(config, config_file, root)
 
     expected_scalar_fields = {
@@ -2013,7 +2273,7 @@ def validate_primary_split_plot_manifest(
     if plot_directory.is_symlink() or not plot_directory.is_dir():
         raise ValueError("Plot directory must be a regular directory.")
     expected_output_paths = []
-    for filename in OUTPUT_FILENAMES:
+    for filename in contract.output_filenames:
         expected_output_paths.append(
             Path(manifest["plot_directory"], filename).as_posix()
         )
@@ -2023,21 +2283,23 @@ def validate_primary_split_plot_manifest(
         root,
         "Output",
     )
-    expected_directory_names = set(OUTPUT_FILENAMES)
-    expected_directory_names.add(PLOT_MANIFEST_FILENAME)
+    expected_directory_names = set(contract.output_filenames)
+    expected_directory_names.add(contract.manifest_filename)
     observed_directory_names = set()
     for path in plot_directory.iterdir():
         observed_directory_names.add(path.name)
     if observed_directory_names != expected_directory_names:
-        raise ValueError("Plot directory contains missing, extra, or non-v2 files.")
-    expected_manifest_path = plot_directory / PLOT_MANIFEST_FILENAME
+        raise ValueError(
+            "Plot directory contains missing, extra, or non-contract files."
+        )
+    expected_manifest_path = plot_directory / contract.manifest_filename
     if manifest_file.resolve() != expected_manifest_path.resolve():
-        raise ValueError("Plot manifest is relocated from its v2 output directory.")
+        raise ValueError("Plot manifest is relocated from its canonical directory.")
     return manifest
 
 
 def main(argv=None):
-    """Generate immutable v2 plots or validate an existing v2 manifest."""
+    """Generate immutable v3 plots or validate a supported manifest."""
 
     arguments = parse_arguments(argv)
     if arguments.validate_manifest:
