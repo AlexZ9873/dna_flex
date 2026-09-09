@@ -1,0 +1,180 @@
+{
+  "artifacts": [
+    {
+      "byte_size": 27189366,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_global_rc_groups_v1.tsv.gz",
+      "sha256": "e306126887335d0974da7b34de3d1736d2daeadad0b0dd0e264b7dfd3eb0e777"
+    },
+    {
+      "byte_size": 87753188,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_logical_examples_v1.tsv.gz",
+      "sha256": "2c7764a0a2012262e09d0b6bea40138a984c8c6f2a8b34d780aa316dd6e9c6e8"
+    },
+    {
+      "byte_size": 23695,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_affinity_histogram_v1.tsv",
+      "sha256": "4cf22b30338f112027bc75de934750a66e03f4811e78309a1910759c07677b25"
+    },
+    {
+      "byte_size": 26065139,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_assignments_v1.tsv.gz",
+      "sha256": "f210dd5acbd448b01e5333a9cdddd237880edde32336415ab8b0043ccc3b3b27"
+    },
+    {
+      "byte_size": 1928,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_count_summary_v1.tsv",
+      "sha256": "65a26e07b390d7fa89b6492689d67b52745815f68d8c3745ecab2274371726ac"
+    },
+    {
+      "byte_size": 338,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_leakage_audit_v1.tsv",
+      "sha256": "dcdd597a4f6f8156bbe545e53e409ab69e0a52ed0213e866569f532b97bca4ce"
+    },
+    {
+      "byte_size": 8236513,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_public_test_inputs_v1.tsv.gz",
+      "sha256": "2b675c70885da07ad33aa33c93222539bf201c01118ee82d54bcac7f4a90c26c"
+    },
+    {
+      "byte_size": 414,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_reconciliation_audit_v1.tsv",
+      "sha256": "88419cfb41207c21587610b67627986ab82cd987e9a35fa7648f29e27cadcb12"
+    },
+    {
+      "byte_size": 704,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_sealed_test_target_manifest_v1.json",
+      "sha256": "c2573b3a1973f89510c0ee3ac0bb28f6736c1353ba5e516c3c37d4b1d3059218"
+    },
+    {
+      "byte_size": 107764955,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_source_occurrence_provenance_v1.tsv.gz",
+      "sha256": "c330fb4591e35ce67cec66b0f7d516316f3a88a374c40eeb97cdf4f29095eb84"
+    }
+  ],
+  "audit_manifest_hash": "745aa5a2f3d9a04cafd1fe473c89afa6248d5bfb2b12617412acd2cc44e64627",
+  "config_path": "configs/exd_hox_primary_split_v1.yaml",
+  "config_sha256": "5894d3c1eac27ddf47a2792c46107b9ff00dfbb4a609e135c78ccee4fe9800b6",
+  "counts": {
+    "collapsed_duplicate_occurrences": 91,
+    "collapsed_duplicate_occurrences_by_tf": {
+      "AbdA": 2,
+      "AbdB": 0,
+      "Antp": 0,
+      "Dfd": 0,
+      "Lab": 0,
+      "Pb": 85,
+      "Scr": 0,
+      "Ubx": 4
+    },
+    "global_rc_group_counts": {
+      "test": 32547,
+      "training": 260379,
+      "validation": 32547
+    },
+    "global_rc_group_degree_distribution": {
+      "1": 268064,
+      "2": 25798,
+      "3": 10692,
+      "4": 6613,
+      "5": 8224,
+      "6": 2457,
+      "7": 1569,
+      "8": 2056
+    },
+    "global_rc_groups": 325473,
+    "groups_shared_across_at_least_two_tfs": 57409,
+    "logical_examples": 461481,
+    "per_tf_logical_example_counts": {
+      "AbdA": 25063,
+      "AbdB": 41463,
+      "Antp": 30767,
+      "Dfd": 26642,
+      "Lab": 32559,
+      "Pb": 228028,
+      "Scr": 34488,
+      "Ubx": 42471
+    },
+    "per_tf_split_counts": {
+      "AbdA": {
+        "test": 2503,
+        "training": 20050,
+        "validation": 2510
+      },
+      "AbdB": {
+        "test": 4144,
+        "training": 33170,
+        "validation": 4149
+      },
+      "Antp": {
+        "test": 3077,
+        "training": 24610,
+        "validation": 3080
+      },
+      "Dfd": {
+        "test": 2661,
+        "training": 21311,
+        "validation": 2670
+      },
+      "Lab": {
+        "test": 3250,
+        "training": 26049,
+        "validation": 3260
+      },
+      "Pb": {
+        "test": 22806,
+        "training": 182428,
+        "validation": 22794
+      },
+      "Scr": {
+        "test": 3450,
+        "training": 27588,
+        "validation": 3450
+      },
+      "Ubx": {
+        "test": 4250,
+        "training": 33971,
+        "validation": 4250
+      }
+    },
+    "source_occurrences": 461572
+  },
+  "dataset_identifier": "wang_etal_exd_hox_selex_canonical.v1",
+  "excluded_identity_axes": [
+    "model_family",
+    "tokenizer",
+    "model_seed",
+    "pretrained_checkpoint",
+    "physical_features",
+    "model_output",
+    "downstream_performance"
+  ],
+  "manifest_hash": "fb595729defc1f140637f0a75d2beb78694a0a36e0fa04446727483bc121e564",
+  "policy": {
+    "affinity_bin_count": 10,
+    "assignment_objective": "lexicographic_stratum_deficit_then_approved_margin_signature_exchange",
+    "equal_distance_bin_merge": "lower",
+    "group_order": "seeded_sha256",
+    "identifier": "global_rc_affinity_stratified_80_10_10.v1",
+    "minimum_distinct_groups_per_bin": 7,
+    "proportions": {
+      "test": 0.1,
+      "training": 0.8,
+      "validation": 0.1
+    },
+    "quota_method": "deterministic_largest_remainder",
+    "seed": 31001,
+    "split_order": [
+      "training",
+      "validation",
+      "test"
+    ]
+  },
+  "schema_version": "exd_hox_primary_split_manifest.v1",
+  "sealed_target_manifest_hash": "3ffa92ec5e7c9aeea84c010e2a6cff472557b02339c4a45cbb56d9a53efae2bf",
+  "source_manifest_hash": "ee671406684cfebdd0c89f6bc764b2b14ec0a7ea6f024a18752506a45e5c1be3",
+  "split_directory": "data/processed/exd_hox_primary_split_v1",
+  "split_identity_hash": "a684fd4fd863709d4a59e8925a2f76d95255e0f33a9996216fd896ce098c393f",
+  "study_identifier": "exd_hox_primary_low_data.v1",
+  "test_access_policy_manifest_hash": "4525194dedb669b6c497fccaa0d0267d3460262e5a3b9bd9e03126a6e260048d",
+  "test_target_handling": "Plaintext test targets exist only in the separately ignored sealed-target artifact."
+}

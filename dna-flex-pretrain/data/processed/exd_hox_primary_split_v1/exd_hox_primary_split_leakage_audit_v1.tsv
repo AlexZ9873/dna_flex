@@ -1,0 +1,5 @@
+comparison	left_split	right_split	exact_sequence_overlap_group_count	reverse_complement_equivalent_overlap_group_count	reverse_complement_only_overlap_group_count	logical_example_overlap_count
+primary	training	validation	0	0	0	0
+primary	training	test	0	0	0	0
+primary	validation	test	0	0	0	0
+paper_split_reproduction	train	test	91	91	0	91

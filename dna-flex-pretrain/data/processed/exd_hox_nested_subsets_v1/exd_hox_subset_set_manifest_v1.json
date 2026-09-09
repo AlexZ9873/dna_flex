@@ -1,0 +1,58 @@
+{
+  "artifacts": [
+    {
+      "byte_size": 9278,
+      "path": "data/processed/exd_hox_nested_subsets_v1/exd_hox_nested_subset_levels_v1.tsv",
+      "sha256": "ea7cb7bcfa99f1e7818e4b1923e617ac1e56b3f73c917990516fe9bad834e95a"
+    },
+    {
+      "byte_size": 43691894,
+      "path": "data/processed/exd_hox_nested_subsets_v1/exd_hox_nested_subset_ordering_v1.tsv.gz",
+      "sha256": "12235483765bf54498bad4a890fe2f3abf6a67578c9eadd516218de4087f62b0"
+    }
+  ],
+  "config_path": "configs/exd_hox_primary_split_v1.yaml",
+  "config_sha256": "5894d3c1eac27ddf47a2792c46107b9ff00dfbb4a609e135c78ccee4fe9800b6",
+  "dataset_identifier": "wang_etal_exd_hox_selex_canonical.v1",
+  "level_row_count": 80,
+  "manifest_hash": "ce75331e6bf5db939ff70df06a1cda07028e31664ef7a8d579c9363d00fc4125",
+  "ordering_logical_example_count": 369177,
+  "policy": {
+    "absolute_alias_tolerance": 0.05,
+    "absolute_counts": [
+      128,
+      256,
+      512
+    ],
+    "downstream_initialization_seeds": [
+      33001,
+      33002,
+      33003,
+      33004,
+      33005
+    ],
+    "fractional_levels": [
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.25,
+      0.5,
+      1.0
+    ],
+    "fractional_rounding": "round_half_up",
+    "minimum_primary_count": 128,
+    "seed": 32001
+  },
+  "schema_version": "exd_hox_subset_set_manifest.v1",
+  "shared_model_conditions": [
+    "cnn_rc",
+    "random_transformer",
+    "s0_transformer",
+    "s1_transformer"
+  ],
+  "split_identity_hash": "a684fd4fd863709d4a59e8925a2f76d95255e0f33a9996216fd896ce098c393f",
+  "split_manifest_hash": "fb595729defc1f140637f0a75d2beb78694a0a36e0fa04446727483bc121e564",
+  "study_identifier": "exd_hox_primary_low_data.v1",
+  "subset_directory": "data/processed/exd_hox_nested_subsets_v1"
+}

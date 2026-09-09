@@ -1,0 +1,11 @@
+{
+  "manifest_hash": "3ffa92ec5e7c9aeea84c010e2a6cff472557b02339c4a45cbb56d9a53efae2bf",
+  "schema_version": "exd_hox_sealed_test_target_manifest.v1",
+  "sealed_target_byte_size": 3990944,
+  "sealed_target_path": "data/sealed/exd_hox_primary_test_targets_v1/exd_hox_sealed_test_targets_v1.tsv.gz",
+  "sealed_target_sha256": "8ef80edda8c5f2307d2d30226bf32c21f6f5f83cef643932b733f1f4445f3fbb",
+  "split_identity_hash": "a684fd4fd863709d4a59e8925a2f76d95255e0f33a9996216fd896ce098c393f",
+  "split_policy_identifier": "global_rc_affinity_stratified_80_10_10.v1",
+  "target_commitment_digest_sha256": "659f5de4f37c01af587ed2383a156869c54e82933524a24c0a35bbbce9efd0dd",
+  "test_logical_example_count": 46141
+}

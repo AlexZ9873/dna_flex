@@ -1,0 +1,137 @@
+{
+  "dataset_identifier": "wang_etal_exd_hox_selex_canonical.v1",
+  "external_source_commit": "9e6d6ef0355558c98855b83a9c21fe11999f65d9",
+  "inputs": [
+    {
+      "byte_size": 9278,
+      "path": "data/processed/exd_hox_nested_subsets_v1/exd_hox_nested_subset_levels_v1.tsv",
+      "sha256": "ea7cb7bcfa99f1e7818e4b1923e617ac1e56b3f73c917990516fe9bad834e95a"
+    },
+    {
+      "byte_size": 1749,
+      "path": "data/processed/exd_hox_nested_subsets_v1/exd_hox_subset_set_manifest_v1.json",
+      "sha256": "645cbea698a3b576b0f8cfcbb87d518c0950337fd580703a933da3bf64a94a5c"
+    },
+    {
+      "byte_size": 23695,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_affinity_histogram_v1.tsv",
+      "sha256": "4cf22b30338f112027bc75de934750a66e03f4811e78309a1910759c07677b25"
+    },
+    {
+      "byte_size": 1928,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_count_summary_v1.tsv",
+      "sha256": "65a26e07b390d7fa89b6492689d67b52745815f68d8c3745ecab2274371726ac"
+    },
+    {
+      "byte_size": 338,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_leakage_audit_v1.tsv",
+      "sha256": "dcdd597a4f6f8156bbe545e53e409ab69e0a52ed0213e866569f532b97bca4ce"
+    },
+    {
+      "byte_size": 5821,
+      "path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_manifest_v1.json",
+      "sha256": "be00a42d4d80d31d7f99567731f53536c897be4b28b0cdb64e574b520a3b8f8d"
+    }
+  ],
+  "manifest_hash": "8a742b436d29d95ba89ca3c42d8f2bbc3fffea27b522dafa5dda3f4b52ecbae2",
+  "outputs": [
+    {
+      "byte_size": 9278,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_nested_subset_counts_plot_source_v3.tsv",
+      "sha256": "8aa891cd030b91cbd9bd2a8576a5d73d403e6d34f58f7964548b4caa354ecf67"
+    },
+    {
+      "byte_size": 27248,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_nested_subset_counts_v3.pdf",
+      "sha256": "d514ba3820cd66e6bd7d436e220712b408763ea6e661bf4dfcdafda029c6161c"
+    },
+    {
+      "byte_size": 421869,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_nested_subset_counts_v3.png",
+      "sha256": "2b9ea7ab9e409b76b8c4df08f3cbc2a7fe73590cbbacdca597273a1df74d8dc7"
+    },
+    {
+      "byte_size": 17559,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_paper_vs_primary_split_counts_v3.pdf",
+      "sha256": "ec25ba69179896a3fe641b196cdb55218eaffffb7b93654cbc29415855888087"
+    },
+    {
+      "byte_size": 104417,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_paper_vs_primary_split_counts_v3.png",
+      "sha256": "88728ce438e3f4a19bd78036baee4227011709c7d38472ad21735668dc3f1fd3"
+    },
+    {
+      "byte_size": 1329,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_paper_vs_primary_split_plot_source_v3.tsv",
+      "sha256": "1ac89f1bb6bd710fdc0b0d1014ec314022c87df302deb031474b38f94bbbe917"
+    },
+    {
+      "byte_size": 25297,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_affinity_distributions_v3.pdf",
+      "sha256": "67f021585914ca92486a6fa8e3b544b737d0bdc4eb8c723beecbd55ab4402f7d"
+    },
+    {
+      "byte_size": 287329,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_affinity_distributions_v3.png",
+      "sha256": "66598fede267f9e1dfda5bcdc371f436b8c220efa1d766081e1dd8daa202497f"
+    },
+    {
+      "byte_size": 39134,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_affinity_plot_source_v3.tsv",
+      "sha256": "029fd16f124ad0f058545f219494659759531b7f73ff547cce707d85905d5ebe"
+    },
+    {
+      "byte_size": 635,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_counts_plot_source_v3.tsv",
+      "sha256": "5d0b1232da6cb01208cf02034cdb3e9e18ef3b93478ef1a2e7915313f5083c98"
+    },
+    {
+      "byte_size": 14958,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_counts_v3.pdf",
+      "sha256": "d2432290a3698c7d9a16f09c3583d43d9728c2c54cd591252df5a2946d99a1b1"
+    },
+    {
+      "byte_size": 54611,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_counts_v3.png",
+      "sha256": "69ba6af914ea5a3e3ea5e713f6d9afbb930b5ea53f90df04163f5c13ebffca5e"
+    },
+    {
+      "byte_size": 338,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_leakage_plot_source_v3.tsv",
+      "sha256": "fb65bd894344018e70293d462f97849021f0271c6ff4971f8dd9faa173f1237b"
+    },
+    {
+      "byte_size": 15886,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_leakage_v3.pdf",
+      "sha256": "20fcfcdb7c874342d9c5558364875965db87a21169e95725d5fc4685551ed3db"
+    },
+    {
+      "byte_size": 84041,
+      "path": "plots/exd_hox_primary_split_v3/exd_hox_primary_split_leakage_v3.png",
+      "sha256": "999dea92bb0d52255dc812e18aaa29380f9723b4d014ee46e3d8efd4dd8e80f1"
+    }
+  ],
+  "plot_config_path": "configs/exd_hox_primary_split_plot_v3.yaml",
+  "plot_config_sha256": "9324ad366a5a411572ec213355987824ac91f5c59fd47262417660e3e3a07a6d",
+  "plot_directory": "plots/exd_hox_primary_split_v3",
+  "plot_generator_commit": "fb6e2ddbeb4e28144a8c0738d2e4b2400a732ca7",
+  "plot_generator_tracked_worktree_clean": true,
+  "plotting_entry_point_byte_size": 89263,
+  "plotting_entry_point_path": "scripts/plot/plot_exd_hox_primary_split.py",
+  "plotting_entry_point_sha256": "d3444611a3767c415e4b3c618fde3195d408cddadafb513cd805d75b97f8b510",
+  "primary_split_config_path": "configs/exd_hox_primary_split_v1.yaml",
+  "primary_split_config_sha256": "5894d3c1eac27ddf47a2792c46107b9ff00dfbb4a609e135c78ccee4fe9800b6",
+  "primary_split_id": "a684fd4fd863709d4a59e8925a2f76d95255e0f33a9996216fd896ce098c393f",
+  "primary_split_manifest_file_sha256": "be00a42d4d80d31d7f99567731f53536c897be4b28b0cdb64e574b520a3b8f8d",
+  "primary_split_manifest_hash": "fb595729defc1f140637f0a75d2beb78694a0a36e0fa04446727483bc121e564",
+  "primary_split_manifest_path": "data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_manifest_v1.json",
+  "schema_version": "exd_hox_primary_split_plot_manifest.v3",
+  "source_foundation_commit": "62a99688cbd3af97f081df500223ba6f55cd0fe0",
+  "split_pipeline_commit": "65c6bddc0f4570e7a6cf5a90f5f6ef5801e01d27",
+  "study_identifier": "exd_hox_primary_low_data.v1",
+  "subset_set_id": "ce75331e6bf5db939ff70df06a1cda07028e31664ef7a8d579c9363d00fc4125",
+  "subset_set_manifest_file_sha256": "645cbea698a3b576b0f8cfcbb87d518c0950337fd580703a933da3bf64a94a5c",
+  "subset_set_manifest_hash": "ce75331e6bf5db939ff70df06a1cda07028e31664ef7a8d579c9363d00fc4125",
+  "subset_set_manifest_path": "data/processed/exd_hox_nested_subsets_v1/exd_hox_subset_set_manifest_v1.json",
+  "test_target_policy": "aggregate_test_counts_only_no_test_affinity_distribution"
+}

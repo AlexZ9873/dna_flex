@@ -87,3 +87,12 @@ data/generated/hg38_pretraining_split_v1/
 /data/raw/exd_hox_selex_canonical_v1/
 
 /data/sealed/exd_hox_primary_test_targets_v1/
+
+/data/processed/exd_hox_primary_split_v1/exd_hox_global_rc_groups_v1.tsv.gz
+/data/processed/exd_hox_primary_split_v1/exd_hox_logical_examples_v1.tsv.gz
+/data/processed/exd_hox_primary_split_v1/exd_hox_primary_split_assignments_v1.tsv.gz
+/data/processed/exd_hox_primary_split_v1/exd_hox_public_test_inputs_v1.tsv.gz
+/data/processed/exd_hox_primary_split_v1/exd_hox_source_occurrence_provenance_v1.tsv.gz
+/data/processed/exd_hox_nested_subsets_v1/exd_hox_nested_subset_ordering_v1.tsv.gz
+/plots/exd_hox_primary_split_v1/
+/plots/exd_hox_primary_split_v2/
