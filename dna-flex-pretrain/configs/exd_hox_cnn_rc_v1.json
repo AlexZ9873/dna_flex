@@ -1,0 +1,119 @@
+{
+  "artifact_schemas": {
+    "attempt": "downstream_execution_attempt.v1",
+    "checkpoint": "downstream_checkpoint.v1",
+    "checkpoint_index": "downstream_checkpoint_index.v1",
+    "completion": "downstream_completion.v1",
+    "epoch_metrics": "cnn_rc_epoch_metrics.v1",
+    "run": "downstream_resolved_run.v1",
+    "validation_summary": "cnn_rc_validation_summary.v1"
+  },
+  "batching": {
+    "drop_last": false,
+    "gradient_accumulation_steps": 1,
+    "num_workers": 0,
+    "order_policy": "epoch_sha256_sort.v1",
+    "persistent_cache": false,
+    "persistent_workers": false
+  },
+  "candidates": {
+    "smoke_adam_v1": {
+      "batch_size": 128,
+      "budget": {
+        "maximum_epochs": 2
+      },
+      "checkpoint": {
+        "after_epoch_validation": true,
+        "before_epoch_validation": true,
+        "every_updates": 100
+      },
+      "early_stopping": {
+        "enabled": false
+      },
+      "loss": "batch_mean_mse_plus_independent_convolution_penalty.v1",
+      "optimizer": {
+        "amsgrad": false,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "capturable": false,
+        "differentiable": false,
+        "epsilon": 1e-08,
+        "foreach": false,
+        "fused": false,
+        "learning_rate": 5e-05,
+        "maximize": false,
+        "name": "Adam",
+        "weight_decay": 0.0
+      },
+      "regularization": {
+        "l1": 5e-06,
+        "l2": 1e-05
+      },
+      "scheduler": null,
+      "selection": {
+        "policy": "maximum_r2_minimum_rmse_earliest_update.v1",
+        "r2_tolerance": 0.0,
+        "rmse_tolerance": 0.0
+      },
+      "status": "provisional_smoke_candidate",
+      "validation": {
+        "batch_size": 128,
+        "every_epochs": 1,
+        "initial_evaluation": false,
+        "selection_evaluations_maximum": 2
+      }
+    }
+  },
+  "data": {
+    "dataset_identifier": "wang_etal_exd_hox_selex_canonical.v1",
+    "split_identity_hash": "a684fd4fd863709d4a59e8925a2f76d95255e0f33a9996216fd896ce098c393f",
+    "split_manifest_hash": "fb595729defc1f140637f0a75d2beb78694a0a36e0fa04446727483bc121e564",
+    "staging_config_sha256": "50a7ba5ae1bd7219b20cdc71b511dfbce8b38855a1b065ac4777eca71a18833b",
+    "staging_policy_identifier": "exd_hox_public_training_stage.v1",
+    "subset_set_manifest_hash": "ce75331e6bf5db939ff70df06a1cda07028e31664ef7a8d579c9363d00fc4125"
+  },
+  "model_contract": "cnn_rc_wang100_kundaje122_population_bn.v1",
+  "model_family": "cnn_rc",
+  "numerics": {
+    "allow_tf32": false,
+    "amp": false,
+    "compile": false,
+    "cublas_workspace_config": ":4096:8",
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "float32_matmul_precision": "highest",
+    "precision": "float32"
+  },
+  "orientation": {
+    "cnn_rc_atol": 1e-06,
+    "cnn_rc_rtol": 1e-05,
+    "training": "logical_example_sha256_orientation.v1",
+    "validation": "forward_rc_mean_with_diagnostic.v1"
+  },
+  "schema_version": "exd_hox_cnn_rc_training_config.v1",
+  "seeds": {
+    "policy": "downstream_named_sha256.v1"
+  },
+  "study_identifier": "exd_hox_primary_low_data.v1",
+  "supported_downstream_seeds": [
+    33001,
+    33002,
+    33003,
+    33004,
+    33005
+  ],
+  "supported_tfs": [
+    "AbdA",
+    "AbdB",
+    "Antp",
+    "Dfd",
+    "Lab",
+    "Pb",
+    "Scr",
+    "Ubx"
+  ]
+}
