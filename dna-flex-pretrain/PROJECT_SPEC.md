@@ -515,6 +515,65 @@ or configuration creates a new identity. Completed results, figures,
 checkpoints, and prior experiment outputs must not be overwritten or deleted
 without approval.
 
+# Milestone 3E-A.1: CARC execution policy
+
+CARC changes execution only. Accepted Milestone 3D data membership, split and
+subset identities, seeds, validation access, search budgets, and sealed-test
+rules remain unchanged. Scientific objectives, S0/S1 definitions, the CNN-RC
+role, deferred work, and restrictions on unsupported claims remain in force.
+Site-specific physical paths belong in execution configuration and metadata,
+not scientific identities. Model and software versions, hyperparameters,
+hardware choices, and environment locations belong in versioned execution and
+model configurations rather than this general policy.
+
+## Allocation and pilot gates
+
+CARC is the primary environment for heavy training and evaluation. Heavy
+computation must run only inside Slurm allocations, never on login nodes.
+One Slurm task and one GPU per independent run is the initial execution policy.
+Multi-GPU execution requires measured justification and explicit approval.
+
+Environment verification, model smoke tests, and throughput measurements must
+pass before scaled experiments. Convergence and limited validation pilots
+must also precede scaling, within the unchanged validation access and search
+budgets. Job arrays require accepted smoke and throughput results plus explicit
+approval of the measured resource and concurrency budget.
+
+## Environment, storage, and staging
+
+Every job must explicitly load the pinned environment module and activate the
+versioned project environment noninteractively. Do not install packages into
+system Python, use `pip --user`, or install software during ordinary training
+jobs. Preserve tracked environment specifications and resolved package
+identities with execution provenance.
+
+Durable accepted data and completed results belong in project storage. Scratch
+is temporary working storage and must never contain the only completed copy.
+Successful scratch results must be hash-verified and published to durable
+project storage, with published hashes verified, before being marked complete.
+
+Data staging requires an exact allowlisted inventory containing each file's
+logical path, byte size, and SHA-256. Reject unlisted or mismatched files.
+Sealed test targets and alternative raw sources exposing test labels must
+remain outside ordinary training areas. Ordinary training and validation entry
+points must not implement final test evaluation; the separate final-test
+operation retains the existing frozen-identity and test-access requirements.
+
+## Run identity and recovery
+
+Scientific run identity is separate from Slurm execution-attempt identity.
+Each attempt must link to its scientific run and record code, environment,
+data, hardware, Slurm job and array/task identifiers where applicable, resource
+requests and allocations, checkpoint identities, and metric identities.
+Retries do not change scientific identity unless scientific inputs or
+configuration change; each retry has a distinct execution-attempt identity.
+
+Checkpoints must preserve complete model and optimizer state, training
+position including data-order position, all RNG state, data, code, and
+environment identities, and selection state. Preserve scheduler state where
+applicable and consumed validation and selection budgets. Incompatible resumes
+and overwriting completed outputs are prohibited.
+
 # Data-leakage controls
 
 Persist and audit:

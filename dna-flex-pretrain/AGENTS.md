@@ -179,6 +179,44 @@ a 100-filter CNN-RC trained from scratch as the primary external baseline.
 - Explain every changed file and every test result.
 - Never delete data, checkpoints, or previous experiment outputs without approval.
 
+# CARC execution policy
+
+- CARC is the primary environment for heavy training and evaluation.
+- Run heavy computation only inside Slurm allocations, never on login nodes.
+- Environment verification, model smoke tests, and throughput measurements
+  must pass before scaled experiments.
+- Default to one Slurm task and one GPU per independent run.
+- Multi-GPU execution requires measured justification and explicit approval.
+- Every job must explicitly load the pinned environment module and activate
+  the versioned project environment noninteractively.
+- Do not install packages into system Python, use `pip --user`, or install
+  software during ordinary training jobs.
+- Preserve tracked environment specifications and resolved package identities.
+- Store durable accepted data and completed results in project storage.
+- Scratch is temporary working storage and must never contain the only
+  completed copy.
+- Hash-verify successful scratch results and publish them to durable project
+  storage, verifying the published hashes, before marking them complete.
+- Data staging requires an exact allowlisted inventory with each file's
+  logical path, byte size, and SHA-256; reject unlisted or mismatched files.
+- Keep sealed test targets and alternative raw sources exposing test labels
+  outside ordinary training areas.
+- Keep scientific run identity separate from Slurm execution-attempt identity.
+  Site-specific physical paths belong in execution configuration and metadata,
+  not scientific identities.
+- Every job must record code, environment, data, hardware, Slurm, resource,
+  checkpoint, and metric identities, including requested and allocated
+  resources and the link between its run and execution attempt.
+- Checkpoints must preserve complete model and optimizer state, training
+  position (including data-order position), all RNG state, data, code, and
+  environment identities, and selection state. Preserve scheduler state where
+  applicable and consumed validation and selection budgets.
+- Prohibit incompatible resumes and overwriting completed outputs.
+- Ordinary training and validation entry points must not implement final test
+  evaluation; retain the separate sealed-test operation and its access rules.
+- Job arrays require accepted smoke and throughput results plus explicit
+  approval of the measured resource and concurrency budget.
+
 # Python style
 
 - Prefer explicit and readable Python over clever or highly compressed code.
