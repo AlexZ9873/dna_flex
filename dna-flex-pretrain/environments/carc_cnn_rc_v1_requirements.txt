@@ -1,0 +1,8 @@
+# Intended direct-dependency resolver input; not a complete transitive lock.
+# Advertised direct-wheel hashes are stored in environments/carc_cnn_rc_v1.json.
+# The complete acquisition lock will be generated, fingerprinted, and reviewed
+# during a later authorized CARC environment-creation step.
+# Offline installation requires the separately resolved, complete hash-locked cache.
+numpy==2.2.6
+PyYAML==6.0.3
+torch==2.14.0+cu126

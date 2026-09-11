@@ -1,0 +1,105 @@
+{
+  "bootstrap": {
+    "channel": "conda-forge",
+    "channel_priority": "strict",
+    "module": "conda/25.11.0",
+    "pip": "25.2",
+    "python": "3.11.14"
+  },
+  "direct_dependencies": [
+    {
+      "advertised_sha256": "ba10f8411898fc418a521833e014a77d3ca01c15b0c6cdcce6a0d2897e6dbbdf",
+      "name": "numpy",
+      "source": "pypi",
+      "version": "2.2.6"
+    },
+    {
+      "advertised_sha256": "b8bb0864c5a28024fac8a632c443c87c5aa6f215c0b126c449ae1a150412f31d",
+      "name": "PyYAML",
+      "source": "pypi",
+      "version": "6.0.3"
+    },
+    {
+      "advertised_sha256": "898b03fc60e642f1b28f59da9f647022a8ad339c1799693b1385fdcb8889f6ba",
+      "name": "torch",
+      "source": "torch_cu126",
+      "version": "2.14.0+cu126"
+    }
+  ],
+  "environment_policy_identifier": "carc_cnn_rc_cu126_p100.v1",
+  "gpu": {
+    "capability": [
+      6,
+      0
+    ],
+    "device": "cuda:0",
+    "name": "Tesla P100-PCIE-16GB",
+    "required_architecture": "sm_60",
+    "torch_cuda_runtime": "12.6",
+    "visible_count": 1
+  },
+  "installation": {
+    "allow_extra_index": false,
+    "allow_system_cuda_module": false,
+    "allow_system_install": false,
+    "allow_user_install": false,
+    "binary_only": true,
+    "complete_closure": true,
+    "fresh_prefix": true,
+    "offline_hash_locked_install": true,
+    "preserve_failed_environment_and_cache": true
+  },
+  "numerics": {
+    "allow_tf32": false,
+    "amp": false,
+    "compile": false,
+    "cublas_workspace_config": ":4096:8",
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "deterministic_algorithms": true,
+    "deterministic_warn_only": false,
+    "float32_matmul_precision": "highest",
+    "mkl_threads": 1,
+    "numexpr_threads": 1,
+    "omp_threads": 1,
+    "openblas_threads": 1,
+    "precision": "float32",
+    "torch_interop_threads": 1,
+    "torch_intraop_threads": 1
+  },
+  "platform": {
+    "implementation": "CPython",
+    "machine": "x86_64",
+    "minimum_glibc": "2.28",
+    "python_abi": "cp311",
+    "system": "Linux"
+  },
+  "schema_version": "carc_cnn_rc_environment_intent.v1",
+  "sources": {
+    "conda": "https://conda.anaconda.org/conda-forge",
+    "pypi": "https://pypi.org/simple",
+    "torch_cu126": "https://download.pytorch.org/whl/cu126"
+  },
+  "verification": {
+    "accepted_cpu_and_p100_required": true,
+    "fixture": "cnn_rc_environment_fixed_tensor.v1",
+    "input_shape": [
+      128,
+      14,
+      4
+    ],
+    "repetitions": 2,
+    "output_atol": 1e-06,
+    "output_rtol": 1e-05,
+    "real_slurm_required": true,
+    "same_device_exact": true,
+    "seed": 43001,
+    "state_atol": 1e-05,
+    "state_rtol": 0.0001,
+    "synthetic_or_mock_acceptance": false,
+    "target_shape": [
+      128,
+      1
+    ]
+  }
+}
